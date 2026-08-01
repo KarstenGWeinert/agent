@@ -38,8 +38,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no
     /opt/rust/bin/cargo install tokei --root /usr/local && \
     rm -rf /opt/rust
 
-## Forgejo-CLI v0.5.0 
-RUN curl -sL "https://codeberg.org/forgejo-contrib/forgejo-cli/releases/download/v0.5.0/forgejo-cli-x86_64-linux.tar.gz" \
+## Forgejo-CLI v0.6.0 
+RUN curl -sL "https://codeberg.org/forgejo-contrib/forgejo-cli/releases/download/v0.6.0/forgejo-cli-x86_64-linux.tar.gz" \
     | tar -xzf - -C /usr/local/bin && \
     chmod +x /usr/local/bin/fj && \
     fj version
