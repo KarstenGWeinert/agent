@@ -16,7 +16,7 @@ Please select the document that matches your current task:
 * Using the local `fj` CLI for managing repositories, PRs, and issues
 
 ## 2. [CI/CD Pipeline](PIPELINE.md)
-**Target Audience:** CI authors maintaining or troubleshooting the `bfett` Forgejo Actions workflow.
+**Target Audience:** CI authors maintaining or troubleshooting the Forgejo Actions workflow.
 * Architecture and run conditions of the multi-job pipeline
 * Best practices for building and testing with immutable Git SHA tags
 * Container registry authentication and package pushing

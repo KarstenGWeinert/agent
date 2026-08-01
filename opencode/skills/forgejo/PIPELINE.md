@@ -1,15 +1,15 @@
 # CI/CD Pipeline Guide
 
-## Pipeline Architecture (bfett project)
+## Pipeline Architecture
 
 The project uses a multi-job pipeline (`.forgejo/workflows/pipeline.yml`):
 
 | Stage | Job | Runs condition |
 |-------|-----|----------------|
-| **build** | `docker build -t bfett:${{ forgejo.sha }} .` | always |
-| **test-bfett** | `test_package("bfett")` via tinytest | needs build |
-| **test-bfett-app** | `test_package("bfett.app")` via tinytest | needs build |
-| **push** | `docker push forgejo:3000/kgw-agent/bfett:${{ forgejo.sha }}` | needs test jobs + branch is `dev` or `main` |
+| **build** | `docker build -t <image>:${{ forgejo.sha }} .` | always |
+| **test** | `test_package("<name>")` via tinytest | needs build |
+| **test-app** | `test_package("<name>.app")` via tinytest | needs build |
+| **push** | `docker push forgejo:3000/<owner>/<repo>:${{ forgejo.sha }}` | needs test jobs + branch is `dev` or `main` |
 | **deploy** | `docker run` with volume/port mounts + health checks | needs push + branch `dev` or `main` |
 
 ### Testing in CI
@@ -17,7 +17,7 @@ The project uses a multi-job pipeline (`.forgejo/workflows/pipeline.yml`):
 Tests are run inside the built image with:
 ```r
 library(tinytest)
-r <- test_package("bfett")
+r <- test_package("<name>")
 ```
 Exits with status 1 on any failure.
 
@@ -27,7 +27,7 @@ Avoid relying on mutable, floating tags (`latest`, `main`) which require forcing
 
 ```yaml
 - name: Build
-  run: docker build -t forgejo:3000/kgw-agent/bfett:${{ forgejo.sha }} .
+  run: docker build -t forgejo:3000/<owner>/<repo>:${{ forgejo.sha }} .
 ```
 
 ### Container Registry Auth & Push
@@ -40,7 +40,7 @@ Avoid relying on mutable, floating tags (`latest`, `main`) which require forcing
   run: echo "${{ secrets.REGISTRY_TOKEN }}" | docker login forgejo:3000 -u <user> --password-stdin
   
 - name: Push image
-  run: docker push forgejo:3000/kgw-agent/bfett:${{ forgejo.sha }}
+  run: docker push forgejo:3000/<owner>/<repo>:${{ forgejo.sha }}
 ```
 
 ### Deployment & Health Checks
@@ -51,7 +51,7 @@ Do not use `docker exec` to test reachability from *inside* the container, as it
 
 ```yaml
 # Run an ephemeral curl container on the same network to test reachability
-docker run --network dev-network --rm curlimages/curl curl -sf http://bfett-${{ forgejo.sha }}:3838
+docker run --network dev-network --rm curlimages/curl curl -sf http://<service>-${{ forgejo.sha }}:3838
 ```
 
 ## Manual Dispatch
@@ -83,7 +83,7 @@ A manual `workflow_dispatch` run skips the `test-transform` job, because that jo
 | Context expression | Env var | Purpose |
 |---|---|---|
 | `${{ forgejo.ref_name }}` | `$FORGEJO_REF_NAME` | Current branch or tag name |
-| `${{ forgejo.repository }}` | `$FORGEJO_REPOSITORY` | `owner/repo` (e.g. `kgw-agent/bfett`) |
+| `${{ forgejo.repository }}` | `$FORGEJO_REPOSITORY` | `owner/repo` |
 | `${{ forgejo.actor }}` | `$FORGEJO_ACTOR` | User who triggered the run |
 | `${{ forgejo.sha }}` | `$FORGEJO_SHA` | Commit SHA that triggered the run |
 | `${{ forgejo.server_url }}` | `$FORGEJO_SERVER_URL` | Forgejo instance URL |
