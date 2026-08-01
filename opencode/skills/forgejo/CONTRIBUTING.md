@@ -54,5 +54,6 @@ cd /repo && echo "$FORGEJO_TOKEN" | fj auth add-key <user>
 | Create release | `fj release create --tag <tag> --title "..."` |
 | List tags | `fj tag list` |
 | Create tag | `fj tag create <name> <ref>` |
+| Dispatch workflow | `fj actions dispatch pipeline.yml <branch>` |
 
 
