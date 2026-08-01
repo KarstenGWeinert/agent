@@ -78,9 +78,9 @@ rejected with `Input argument does not contain a '=' character!`:
 fj ... actions dispatch data-pipeline.yml main --inputs '{"job":"ingest"}'
 ```
 
-> **Gotcha:** on Forgejo 15.0.2 an unknown workflow file (or unknown ref) returns
+> **Gotcha:** an unknown workflow file (or unknown ref) returns
 > `500 Internal Server Error` with an empty body instead of `404 Not Found`
-> (the error mapping is fixed upstream). Pass the correct filename to avoid the misleading 500.
+> (still the case on Forgejo 16.0.2). Pass the correct filename to avoid the misleading 500.
 
 A manual `workflow_dispatch` run skips the `test-transform` job, because that job is gated on
 `forgejo.event_name == 'push'`.
