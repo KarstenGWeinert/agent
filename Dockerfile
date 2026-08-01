@@ -25,12 +25,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone && \
     dpkg-reconfigure --frontend noninteractive tzdata
 
-## Neovim 
-RUN curl -LO https://github.com/neovim/neovim/releases/download/v0.10.4/nvim-linux-x86_64.tar.gz && \
-    tar -C /opt -xzf nvim-linux-x86_64.tar.gz && \
-    ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim && \
-    rm nvim-linux-x86_64.tar.gz
-	
 ## Air (R formatter) 
 RUN curl -LsSf https://github.com/posit-dev/air/releases/latest/download/air-installer.sh | sh \
     && cp /root/.local/bin/air /usr/local/bin/air \
@@ -96,13 +90,6 @@ RUN /opt/lea-venv/bin/pip install --upgrade pip
 RUN /opt/lea-venv/bin/pip install lea-cli duckdb
 ENV PATH="/opt/lea-venv/bin:${PATH}"
 
-## lazygit 
-RUN LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
-    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz" && \
-    tar xf lazygit.tar.gz lazygit && \
-    install lazygit /usr/local/bin && \
-    rm lazygit.tar.gz lazygit
-
 ## Pre-create directories and ensure correct ownership
 RUN mkdir -p /home/agent/.local/share /home/agent/.config && \
     mkdir -p /home/nert/.local/share /home/nert/.config && \
@@ -153,6 +140,16 @@ RUN echo 'if [ -z "$TMUX" ] && [[ $- == *i* ]]; then exec tmux new-session -A -s
 RUN mkdir -p /home/agent/.config && chown agent:agent /home/agent/.config
 COPY --chown=agent:agent opencode/ /home/agent/.config/opencode/
 
+## mattpocock engineering skills (installed at build time from upstream)
+RUN git clone --depth 1 https://github.com/mattpocock/skills /tmp/mattpocock-skills && \
+    mkdir -p /home/agent/.config/opencode/skills && \
+    for s in code-review codebase-design diagnosing-bugs domain-modeling grill-with-docs \
+             implement research resolving-merge-conflicts tdd to-spec to-tickets triage wayfinder; do \
+        cp -r /tmp/mattpocock-skills/skills/engineering/$s /home/agent/.config/opencode/skills/$s || exit 1; \
+    done && \
+    rm -rf /tmp/mattpocock-skills && \
+    chown -R agent:agent /home/agent/.config/opencode
+
 ## R Configuration (Using PPM Binaries)
 RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*/\1/') && \
     echo "Detected R version: $R_VERSION" && \
@@ -170,21 +167,6 @@ RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*
     R -q -e 'pak::pkg_install(c("remotes", "data.table", "duckdb", "shiny", "bslib", "reactable", "plotly", "pdftools", \
 		"RhpcBLASctl", "nanoparquet", "httr", "jsonlite", "R.utils", "roxygen2", "devtools", "tinytest", "languageserver"))'
 
-##  Neovim Setup (copy config + sync plugins for both users)
-COPY kickstart.nvim /tmp/kickstart.nvim
-RUN mkdir -p /home/agent/.config/nvim /home/nert/.config/nvim && \
-    cp /tmp/kickstart.nvim /home/agent/.config/nvim/init.lua && \
-    cp /tmp/kickstart.nvim /home/nert/.config/nvim/init.lua && \
-    chown -R agent:agent /home/agent/.config && \
-    chown -R nert:nert /home/nert/.config && \
-    rm /tmp/kickstart.nvim
-
-USER agent
-RUN nvim --headless "+Lazy! sync" +qa
-
-USER nert
-RUN nvim --headless "+Lazy! sync" +qa
-
 ## sshd requires root
 USER root
 HEALTHCHECK --interval=60s --timeout=20s --start-period=120s --retries=3 \
@@ -195,8 +177,8 @@ EXPOSE 22
 RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \
 	echo 'echo "GH_TOKEN=${GITHUB_TOKEN_AGENT}" > /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'echo "GH_TOKEN=${GITHUB_TOKEN_NERT}" > /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'echo "FORGEJO_TOKEN=${FORGEJO_TOKEN}" > /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'echo "FORGEJO_TOKEN=${FORGEJO_TOKEN}" > /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
+	echo 'echo "FORGEJO_TOKEN=${FORGEJO_TOKEN}" >> /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
+	echo 'echo "FORGEJO_TOKEN=${FORGEJO_TOKEN}" >> /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'chown agent:agent /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'chown nert:nert /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'chmod 600 /home/agent/.ssh/environment /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
