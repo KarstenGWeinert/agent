@@ -27,7 +27,11 @@ Runners can be registered at repo, org, or instance level. Repo-level runners ap
 | Actions tasks | `fj actions tasks` |
 | Actions secrets | `fj actions secrets list/create/delete` |
 | Actions variables | `fj actions variables list/create/delete` |
-| Dispatch workflow | `fj actions dispatch <name> <ref>` |
+| Dispatch workflow | `fj actions dispatch <filename> <ref>` |
+
+> `actions dispatch` takes the workflow **filename** (e.g. `pipeline.yml`), not the workflow's
+> `name:` (e.g. `Pipeline`). On Forgejo 15.0.2 a wrong value returns `500` with an empty message
+> (should be `404`; fixed upstream).
 
 ## Fetching Workflow Logs via API
 

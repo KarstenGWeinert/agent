@@ -54,6 +54,26 @@ Do not use `docker exec` to test reachability from *inside* the container, as it
 docker run --network dev-network --rm curlimages/curl curl -sf http://bfett-${{ forgejo.sha }}:3838
 ```
 
+## Manual Dispatch
+
+The pipeline declares `on.workflow_dispatch`, so it can be triggered by hand:
+
+```bash
+fj --host http://forgejo:3000 actions dispatch pipeline.yml dev --repo kgw/bfett
+```
+
+`fj actions dispatch` takes the workflow **filename** as its first argument (e.g. `pipeline.yml`),
+**not** the workflow's `name:` field (e.g. `Pipeline`). The value is passed verbatim as the
+`workflowfilename` path parameter of `POST /api/v1/repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches`,
+which matches the file under `.forgejo/workflows/`.
+
+> **Gotcha:** on Forgejo 15.0.2 an unknown workflow file (or unknown ref) returns
+> `500 Internal Server Error` with an empty body instead of `404 Not Found`
+> (the error mapping is fixed upstream). Pass the correct filename to avoid the misleading 500.
+
+A manual `workflow_dispatch` run skips the `test-transform` job, because that job is gated on
+`forgejo.event_name == 'push'`.
+
 ## Forgejo Actions Guidelines
 
 ### Prefer Forgejo-native variables
