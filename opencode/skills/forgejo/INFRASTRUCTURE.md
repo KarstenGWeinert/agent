@@ -33,23 +33,31 @@ Runners can be registered at repo, org, or instance level. Repo-level runners ap
 > `name:` (e.g. `Pipeline`). On Forgejo 15.0.2 a wrong value returns `500` with an empty message
 > (should be `404`; fixed upstream).
 
-## Fetching Workflow Logs via API
+## Fetching Workflow Logs
 
-When building scripts to interact with the API, avoid masking errors and making brittle assumptions about job sequences.
+On Forgejo 15.0.2 there is **no API route** for job logs: `/api/v1/repos/{owner}/{repo}/actions/runs/{run_id}/jobs`
+returns `404 page not found` (Swagger lists under `/actions/` only `runners`, `runs`, `runs/{run_id}`, `secrets`,
+`tasks`, `variables`, `workflows/.../dispatches`), and the run-detail endpoint carries no job/log data.
+`fj actions` has no logs subcommand (only `tasks`, `variables`, `secrets`, `dispatch`).
+
+Working path: list runs via `fj`, then fetch the log through the Web-UI route with Basic-Auth
+(API-token header alone is not accepted on Web-UI routes).
 
 ```bash
-#!/bin/bash
-# Enable pipefail to prevent silent errors if the API request fails before jq/python
-set -e -o pipefail
+# Run list (newest first):
+fj --host http://forgejo:3000 actions tasks --repo kgw/bfett
 
-# Get the latest run ID
-RUN_ID=$(curl -sf -H "Authorization: token $FORGEJO_TOKEN" "http://forgejo:3000/api/v1/repos/owner/repo/actions/runs?limit=1" | python3 -c "import sys,json; print(json.load(sys.stdin)['workflow_runs'][0]['id'])")
-
-# Fetch job IDs explicitly instead of iterating blindly until 404
-curl -sf -H "Authorization: token $FORGEJO_TOKEN" "http://forgejo:3000/api/v1/repos/owner/repo/actions/runs/$RUN_ID/jobs" > jobs.json
-
-# (You can then parse jobs.json to fetch logs for the specific valid job IDs)
+# Logs of a job. Determine job_id: the run page
+#   http://forgejo:3000/<owner>/<repo>/actions/runs/<run_id>
+# redirects (307) to /jobs/<job_id>/attempt/<attempt>
+curl -s -u "kgw-agent:$FORGEJO_TOKEN" \
+  "http://forgejo:3000/<owner>/<repo>/actions/runs/<run_id>/jobs/<job_id>/attempt/<attempt>/logs"
 ```
+
+> **Forgejo ≥ v16.0.0** adds proper REST log endpoints (PR #12666): `GET /repos/{owner}/{repo}/actions/runs/{run_id}/logs`
+> streams a zip of all job logs in a run, `GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs` returns a single job's
+> plaintext log. Prefer those after an upgrade. A job-listing endpoint (`/actions/runs/{run_id}/jobs`) is not yet
+> available upstream (issue #13076).
 
 ## Container Registry API
 
