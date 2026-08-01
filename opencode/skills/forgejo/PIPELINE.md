@@ -60,6 +60,9 @@ The pipeline declares `on.workflow_dispatch`, so it can be triggered by hand:
 
 ```bash
 fj --host http://forgejo:3000 actions dispatch pipeline.yml dev --repo kgw/bfett
+
+# With a workflow input (data-pipeline.yml declares the `job` input: ingest/transform/all):
+fj --host http://forgejo:3000 actions dispatch data-pipeline.yml main --repo kgw/bfett --inputs job=ingest
 ```
 
 `fj actions dispatch` takes the workflow **filename** as its first argument (e.g. `pipeline.yml`),
@@ -67,9 +70,17 @@ fj --host http://forgejo:3000 actions dispatch pipeline.yml dev --repo kgw/bfett
 `workflowfilename` path parameter of `POST /api/v1/repos/{owner}/{repo}/actions/workflows/{workflowfilename}/dispatches`,
 which matches the file under `.forgejo/workflows/`.
 
-> **Gotcha:** on Forgejo 15.0.2 an unknown workflow file (or unknown ref) returns
+`--inputs` (alias `-I`, repeatable) takes `key=value` pairs, **not** a JSON string. A JSON argument is
+rejected with `Input argument does not contain a '=' character!`:
+
+```bash
+# wrong:
+fj ... actions dispatch data-pipeline.yml main --inputs '{"job":"ingest"}'
+```
+
+> **Gotcha:** an unknown workflow file (or unknown ref) returns
 > `500 Internal Server Error` with an empty body instead of `404 Not Found`
-> (the error mapping is fixed upstream). Pass the correct filename to avoid the misleading 500.
+> (still the case on Forgejo 16.0.2). Pass the correct filename to avoid the misleading 500.
 
 A manual `workflow_dispatch` run skips the `test-transform` job, because that job is gated on
 `forgejo.event_name == 'push'`.
