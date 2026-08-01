@@ -101,7 +101,7 @@ WORKDIR /home/agent
 
 # Configure Git 
 RUN git config --global credential.https://github.com.helper "!gh auth git-credential" && \                            
-    git config --global credential.http://forgejo:3000.helper '!f() { echo "username=kgw-agent"; echo "password=$FORGEJO_TOKEN"; }; f' && \                                                                                       36% used                                
+    git config --global credential.http://forgejo:3000.helper '!f() { echo "username=kgw-agent"; echo "password=$FORGEJO_TOKEN"; }; f' && \
     git config --global user.name "OpenCode Agent" && \
     git config --global user.email "agent@opencode.local" 
 
