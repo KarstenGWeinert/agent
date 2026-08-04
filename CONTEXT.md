@@ -1,0 +1,41 @@
+# Agent Dev-Container Context
+
+The `agent` Docker dev-container: a bundled toolchain (R, Python, DuckDB, Helix, opencode) plus vendored agent skills that the container's users invoke against GitHub and the local Forgejo instance.
+
+## Language
+
+**Nightshift run**:
+A single unattended pass over the current repository's entire `ready-for-agent` backlog, from invocation to a merge request into `main`.
+_Avoid_: batch, night job, backlog processing
+
+**Ready-for-agent ticket**:
+An issue that has been fully triaged and specified, carrying the `ready-for-agent` label and ready for an AFK agent to implement.
+_Avoid_: actionable issue, spec ticket
+
+**Ticket work branch**:
+The branch a subagent implements a single ticket on, cut from `nightshift` and named after the ticket.
+_Avoid_: feature branch, ticket branch
+
+**Integration branch** (`nightshift`):
+The shared branch that all solved ticket work branches merge into; CI runs against it and it is the head of the merge request into `main`.
+_Avoid_: working branch, night branch
+
+**Subagent**:
+The delegated agent that implements one ticket on its ticket work branch; it is responsible for solving the ticket, not for the run's overall flow.
+
+**Solved ticket**:
+A ticket whose acceptance criteria are all met and whose repo checks pass; a solved ticket is merged into `nightshift` and relabeled `ready-for-human`.
+
+**Failed ticket**:
+A ticket the subagent could not solve; it is not merged, relabeled back to `needs-triage`, and reported.
+
+**Tracker**:
+The issue tracker a repo lives on, derived from the repo's origin URL (`github.com` → GitHub/`gh`, `forgejo` host → Forgejo/`fj`).
+_Avoid_: backend, system
+
+**End-of-run CI**:
+The repo's own pipeline, dispatched on the `nightshift` ref after the backlog is exhausted; a manual dispatch skips push-triggered jobs.
+
+**Merge request**:
+The PR/MR from `nightshift` into `main` that ends a run; its body closes each resolved ticket with a keyword like `closes #<number>`. A human merges it — agents never push to `main`.
+_Avoid_: PR, pull request (use the tracker's own term: PR on GitHub, MR on Forgejo)
