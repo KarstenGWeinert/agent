@@ -1,0 +1,5 @@
+# Nightshift: per-ticket work branches merged into a shared `nightshift` integration branch
+
+A `nightshift` run implements each `ready-for-agent` ticket on its own work branch via a subagent, and merges that branch into the shared `nightshift` branch only when the ticket is solved (acceptance criteria met and repo checks green). Failed tickets are skipped and relabeled `needs-triage`; the run never aborts on a single failure. CI runs once on `nightshift` at the end, and the run closes with a merge request into `main`.
+
+We chose per-ticket branches over committing directly to `nightshift` so a failing ticket never leaves partial work on the integration branch, and each ticket's diff stays reviewable on its own. We chose skip-and-continue over abort-on-first-failure so one blocked ticket cannot stall the entire overnight backlog; the trade-off — a run can end with unresolved tickets — is handled by relabeling them back to `needs-triage` so they re-enter the queue. The agent is intentionally barred from pushing to `main`: the run's terminal state is a merge request that a human merges.
