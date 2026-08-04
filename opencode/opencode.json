@@ -8,5 +8,10 @@
     },
     "skills": {
       "paths": ["~/.config/opencode/skills"]                                                                                                             
-    }
+    },
+    "permission": {
+      "read": "allow",
+      "edit": "allow",
+      "bash": "allow"
+  }
 }
