@@ -74,4 +74,8 @@ fj --host http://forgejo:3000 whoami   # => "currently signed in to kgw-agent@fo
 | Create tag | `fj tag create <name> <ref>` |
 | Dispatch workflow | `fj actions dispatch pipeline.yml <branch>` |
 
+### Issue and PR body hygiene
+
+Always create issues and PRs through the CLI — `fj issue create`, `fj pr create` — and never hand-assemble JSON payloads with `curl` for create/edit operations. The CLI builds the payload itself; hand-built curl payloads are how escaping/encoding artefacts sneak into bodies (e.g. `invalid character '`' in string escape code`). Raw `curl` is reserved for the infrastructure-only cases in `INFRASTRUCTURE.md` (runner registration, registry tokens, actions logs).
+
 
