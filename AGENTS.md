@@ -39,5 +39,5 @@ Operating instructions for AI agents working in this repository.
 
 - The image is heavy (R, Python 3.14, Rust/Tokei, Helix, DuckDB, opencode) — a build takes roughly 20–40 minutes. The GHA cache (`type=gha`) persists between runs and makes re-runs faster.
 - A line-continuation backslash must be the last character on the line. Historically, stray editor text after a `\` (e.g. `36% used`) broke the Dockerfile parse; keep lines clean.
-- The mattpocock engineering skills are cloned from upstream at build time; the `forgejo` skill is vendored under `opencode/skills/forgejo`.
+- The mattpocock engineering skills are cloned from upstream at build time; the `forgejo`, `nightshift`, and `setup-repo` skills are vendored under `opencode/skills/`. `setup-repo` is the stand-in for the upstream `/setup-matt-pocock-skills` reference — it detects a repo's tracker, ensures the seven triage labels, and writes the per-repo `docs/agents/issue-tracker.md`. That file is a repo artifact (committed for this repo), never baked into the image (`opencode/` is the only tree COPY'd in, and `.dockerignore` drops `*.md`).
 - `.dockerignore` excludes `*.md` (so `README.md`/`AGENTS.md` are not in the Docker build context).

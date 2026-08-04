@@ -33,6 +33,10 @@ A ticket the subagent could not solve; it is not merged, relabeled back to `need
 The issue tracker a repo lives on, derived from the repo's origin URL (`github.com` → GitHub/`gh`, `forgejo` host → Forgejo/`fj`).
 _Avoid_: backend, system
 
+**Triage label**:
+One of the seven canonical issue-tracker labels — `bug`/`enhancement` (category) and `needs-triage`/`needs-info`/`ready-for-agent`/`ready-for-human`/`wontfix` (state) — that triage assigns and nightshift consumes. Label strings equal the role names on both trackers.
+_Avoid_: tag, milestone
+
 **End-of-run CI**:
 The repo's own pipeline, dispatched on the `nightshift` ref after the backlog is exhausted; a manual dispatch skips push-triggered jobs.
 
