@@ -63,11 +63,11 @@ fj --host http://forgejo:3000 whoami   # => "currently signed in to kgw-agent@fo
 |------|---------|
 | View repo | `fj repo view owner/repo` |
 | Clone repo | `fj repo clone owner/repo [path]` |
-| Create PR | `fj pr create --title "..." --body "..."` |
+| Create PR | `fj pr create --base <BASE> --head <HEAD> [TITLE] --body "..."` — title is positional, no `--title` flag |
 | Merge PR | `fj pr merge <number>` (humans only — the agent lacks merge access) |
 | View PR | `fj pr view <number>` |
 | List issues | `fj issue search` |
-| Create issue | `fj issue create --title "..." --body "..."` |
+| Create issue | `fj issue create [TITLE] --body "..."` — title is positional, no `--title` flag |
 | List releases | `fj release list` |
 | Create release | `fj release create --tag <tag> --title "..."` |
 | List tags | `fj tag list` |
@@ -77,5 +77,11 @@ fj --host http://forgejo:3000 whoami   # => "currently signed in to kgw-agent@fo
 ### Issue and PR body hygiene
 
 Always create issues and PRs through the CLI — `fj issue create`, `fj pr create` — and never hand-assemble JSON payloads with `curl` for create/edit operations. The CLI builds the payload itself; hand-built curl payloads are how escaping/encoding artefacts sneak into bodies (e.g. `invalid character '`' in string escape code`). Raw `curl` is reserved for the infrastructure-only cases in `INFRASTRUCTURE.md` (runner registration, registry tokens, actions logs).
+
+### Gotchas
+
+- **`--body` vs `--body-file`:** `--body` breaks on shell-special characters (backticks, parentheses, umlauts). For bodies with special characters, write the body to a temp file and pass `--body-file <file>`.
+- **`-R` / `--cwd`:** `-R, --remote <REMOTE>` is a *local git remote name*, not a repo path. Running e.g. `fj -R kgw/bfett ...` outside a repo directory fails with `no repo info`. Either pass `--cwd` or run inside the repo directory.
+- **Labels:** `fj issue create` has no `--labels` option — labels cannot be set at creation. Set them afterwards with `fj issue edit <nr> labels --add <label>` (remove with `--rm`).
 
 
