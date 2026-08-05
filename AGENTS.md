@@ -11,6 +11,8 @@ Operating instructions for AI agents working in this repository.
 ## 2. Git rules (critical)
 
 - **Never push to `main`.** It is protected; pushes are rejected. `main` changes only via merged PRs (the human merges).
+- Full branch lifecycle: push → open PR → merge → **delete the branch** — locally (`git branch -d <branch>`) and remotely (`git push origin --delete <branch>`).
+- Refresh before cutting a new feature branch: `git fetch origin`, then fast-forward local `main` to `origin/main` (`git checkout main && git merge --ff-only origin/main`, or `git pull --ff-only`) so new work never sits on a stale local `main`.
 - Always: feature branch → push → open PR against `main`.
 - Conventional commits (`feat:`, `fix:`, `docs:`, `ci:`, `refactor:`, `chore:`) matching repo history.
 - Descriptive branch names with prefixes: `fix/`, `docs/`, `ci/`, `rework/`, `chore/`.

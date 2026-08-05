@@ -23,6 +23,10 @@ See the `setup-repo` skill for the full color/description table and bootstrap co
 - View a PR: `gh pr view <n>`
 - Post issue/PR bodies via the CLI — never hand-assembled curl JSON
 
+Branch hygiene: GitHub's `delete_branch_on_merge` is **off** for this repo, so merged branches stay on `origin` and must be deleted manually — locally (`git branch -d <branch>`) and remotely (`git push origin --delete <branch>`). To identify stale merged branches:
+- `git branch -r --merged origin/main` lists remote branches already merged into `main` (candidates for deletion).
+- `gh pr list --state merged` shows merged PRs whose head branches are safe to delete.
+
 ## Wayfinding operations
 
 - The map is a single issue labelled `wayfinder:map`.
