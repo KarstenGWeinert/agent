@@ -39,7 +39,7 @@ Order the backlog by `createdAt` ascending — oldest first, first-in-first-out.
 
 For each ticket, in order, exactly one at a time:
 
-1. **Create a ticket work branch** from the current head of `nightshift`. Name it after the ticket, e.g. `nightshift/<number>`.
+1. **Create a ticket work branch** from the current head of `nightshift`. Name it after the ticket, e.g. `nightshift-<number>`. The slash form `nightshift/<number>` is impossible — git refuses to create `refs/heads/nightshift/<number>` beneath the existing `refs/heads/nightshift` branch.
 2. **Delegate the ticket to a subagent.** Give the subagent the ticket's full body, comments, and acceptance criteria. Its job: implement the change on the work branch. The ticket is considered **solved** only when **both** hold:
    - every acceptance criterion in the ticket is met, and
    - the repo's checks pass — run the repo's standard test/lint command (e.g. tinytest for R packages; `docker build` lint-style checks where the repo has no unit tests). If the ticket names a specific verification, use that.
