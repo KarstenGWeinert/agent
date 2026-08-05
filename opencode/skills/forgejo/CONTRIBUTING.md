@@ -68,11 +68,27 @@ fj --host http://forgejo:3000 whoami   # => "currently signed in to kgw-agent@fo
 | View PR | `fj pr view <number>` |
 | List issues | `fj issue search` |
 | Create issue | `fj issue create [TITLE] --body "..."` — title is positional, no `--title` flag |
+| View repo labels | `fj repo labels <owner>/<repo> view` |
+| Add label to issue | `fj issue edit <number> labels --add <label>` |
+| Remove label from issue | `fj issue edit <number> labels --rm <label>` |
 | List releases | `fj release list` |
 | Create release | `fj release create --tag <tag> --title "..."` |
 | List tags | `fj tag list` |
 | Create tag | `fj tag create <name> <ref>` |
 | Dispatch workflow | `fj actions dispatch pipeline.yml <branch>` |
+
+### Issue labels
+
+`fj issue create` **cannot** set labels — labels are added *after* creation:
+
+- Add: `fj issue edit <number> labels --add <label>`
+- Remove: `fj issue edit <number> labels --rm <label>`
+- List labels: `fj issue view <number>` shows the labels on an issue; `fj repo labels <owner>/<repo> view` shows the repo's full set
+- Manage label definitions: `fj repo labels <repo> create <name> <color> -d "<desc>"` (also `edit`, `delete`)
+
+Labels are matched by **name**. The canonical triage set (`ready-for-agent`, `needs-triage`, `bug`,
+`enhancement`, `refactor`, `ready-for-human`, `wontfix`, `needs-info`) is defined by the `setup-repo`
+skill — see that skill for the full vocabulary.
 
 ### Issue and PR body hygiene
 
@@ -82,6 +98,6 @@ Always create issues and PRs through the CLI — `fj issue create`, `fj pr creat
 
 - **`--body` vs `--body-file`:** `--body` breaks on shell-special characters (backticks, parentheses, umlauts). For bodies with special characters, write the body to a temp file and pass `--body-file <file>`.
 - **`-R` / `--cwd`:** `-R, --remote <REMOTE>` is a *local git remote name*, not a repo path. Running e.g. `fj -R kgw/bfett ...` outside a repo directory fails with `no repo info`. Either pass `--cwd` or run inside the repo directory.
-- **Labels:** `fj issue create` has no `--labels` option — labels cannot be set at creation. Set them afterwards with `fj issue edit <nr> labels --add <label>` (remove with `--rm`).
+- **Labels:** `fj issue create` has no `--labels` option — labels cannot be set at creation. See the "Issue labels" section above for the full workflow.
 
 
