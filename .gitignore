@@ -1,3 +1,4 @@
 authorized_keys
 opencode_auth/*
 opencode_config/*
+.logs/

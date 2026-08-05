@@ -4,6 +4,18 @@ The `agent` Docker dev-container: a bundled toolchain (R, Python, DuckDB, Helix,
 
 ## Language
 
+**Session-Log**:
+A per-session JSON export (conversation history plus token and cost figures) produced from opencode's own `opencode export` data. One file per session, written into the `session-logs` branch.
+_Avoid_: transcript dump, log file
+
+**`session-logs` branch**:
+A long-lived orphaned branch in this repo that holds every session-log JSON and the `cost.csv` ledger. It is not a feature branch and does not merge into `main`; it is pushed straight to `origin/session-logs`.
+_Avoid_: log branch, metrics branch, feature branch
+
+**`cost.csv`**:
+A CSV ledger, one row per exported session (timestamp, session id, model, input/output/reasoning/cache-read tokens, cost). Its session ids double as the "already backed up" marker that makes `log-sessions` idempotent.
+_Avoid_: expense report, cost table
+
 **Nightshift run**:
 A single unattended pass over the current repository's entire `ready-for-agent` backlog, from invocation to a merge request into `main`.
 _Avoid_: batch, night job, backlog processing
