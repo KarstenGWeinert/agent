@@ -11,6 +11,8 @@ Operating instructions for AI agents working in this repository.
 ## 2. Git rules (critical)
 
 - **Never push to `main`.** It is protected; pushes are rejected. `main` changes only via merged PRs (the human merges).
+- Full branch lifecycle: push → open PR → merge → **delete the branch** — locally (`git branch -d <branch>`) and remotely (`git push origin --delete <branch>`).
+- Refresh before cutting a new feature branch: `git fetch origin`, then fast-forward local `main` to `origin/main` (`git checkout main && git merge --ff-only origin/main`, or `git pull --ff-only`) so new work never sits on a stale local `main`.
 - Always: feature branch → push → open PR against `main`.
 - Conventional commits (`feat:`, `fix:`, `docs:`, `ci:`, `refactor:`, `chore:`) matching repo history.
 - Descriptive branch names with prefixes: `fix/`, `docs/`, `ci/`, `rework/`, `chore/`.
@@ -20,7 +22,8 @@ Operating instructions for AI agents working in this repository.
 - GitHub auth runs through `GH_TOKEN`, provided via `~/.ssh/environment` (injected by sshd on SSH login). It is **not** present in the session environment by default.
 - Never echo the token, and never embed it in URLs, commits, or `.git/config`.
 - Set `GH_TOKEN` **inline per command** (the environment does not persist between tool calls). If no token is available, ask the user how to authenticate — do not assume a file path.
-- Plumbing: `agent.sh` forwards `GITHUB_TOKEN_AGENT`, `GITHUB_TOKEN_NERT`, `FORGEJO_TOKEN` into the container; the entrypoint writes `GH_TOKEN` + `FORGEJO_TOKEN` into each user's `~/.ssh/environment`.
+- Plumbing: `agent.sh` forwards `GITHUB_TOKEN_AGENT`, `GITHUB_TOKEN_NERT`, `FORGEJO_TOKEN`, `DEEPSEEK_API_KEY` into the container; the entrypoint writes `GH_TOKEN`, `FORGEJO_TOKEN`, and `DEEPSEEK_API_KEY` into each user's `~/.ssh/environment`.
+- `DEEPSEEK_API_KEY` is authoritative: the manually-set key in the running container's `~/.local/share/opencode/auth.json` must be removed (operator action on the running container, not a repo change) so opencode picks the env var.
 
 ## 4. Build / correction cycle (the intended workflow)
 

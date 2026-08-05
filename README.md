@@ -11,6 +11,7 @@ Ein Docker-Image für einen SSH-fähigen Agent-Entwicklungscontainer mit vorinst
 export GITHUB_TOKEN_AGENT=ghp_xxx   # Token der Agent-Accounts
 export GITHUB_TOKEN_NERT=ghp_xxx
 export FORGEJO_TOKEN=xxx
+export DEEPSEEK_API_KEY=sk-xxx
 ./agent.sh run
 ```
 
@@ -52,4 +53,4 @@ SSH erlaubt nur `agent` und `nert`, ausschließlich per Public Key (keine Passw�
 
 ## Tokens
 
-Der Entrypoint schreibt `GH_TOKEN` und `FORGEJO_TOKEN` in die Datei `~/.ssh/environment` des jeweiligen Benutzers; sshd injiziert sie beim SSH-Login in die Shell (`PermitUserEnvironment`). Die Git-Credential-Helper für GitHub und Forgejo lesen daraus automatisch.
+Der Entrypoint schreibt `GH_TOKEN`, `FORGEJO_TOKEN` und `DEEPSEEK_API_KEY` in die Datei `~/.ssh/environment` des jeweiligen Benutzers; sshd injiziert sie beim SSH-Login in die Shell (`PermitUserEnvironment`). Die Git-Credential-Helper für GitHub und Forgejo lesen daraus automatisch.
