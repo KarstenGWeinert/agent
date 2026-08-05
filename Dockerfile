@@ -118,7 +118,8 @@ COPY authorizedkeys /tmp/authorizedkeys
 ## Per-user GitHub tokens for SSH login shells
 RUN echo 'GITHUB_TOKEN_AGENT' >> /etc/environment && \
     echo 'GITHUB_TOKEN_NERT'   >> /etc/environment && \
-    echo 'FORGEJO_TOKEN' >> /etc/environment
+    echo 'FORGEJO_TOKEN' >> /etc/environment && \
+    echo 'DEEPSEEK_API_KEY' >> /etc/environment
 
 RUN mkdir -p /home/agent/.ssh /home/nert/.ssh && \
     cp /tmp/authorizedkeys /home/agent/.ssh/authorized_keys && \
@@ -179,6 +180,8 @@ RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \
 	echo 'echo "GH_TOKEN=${GITHUB_TOKEN_NERT}" > /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'echo "FORGEJO_TOKEN=${FORGEJO_TOKEN}" >> /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'echo "FORGEJO_TOKEN=${FORGEJO_TOKEN}" >> /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
+	echo 'echo "DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}" >> /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
+	echo 'echo "DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}" >> /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'chown agent:agent /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'chown nert:nert /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'chmod 600 /home/agent/.ssh/environment /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \

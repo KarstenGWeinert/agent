@@ -22,7 +22,8 @@ Operating instructions for AI agents working in this repository.
 - GitHub auth runs through `GH_TOKEN`, provided via `~/.ssh/environment` (injected by sshd on SSH login). It is **not** present in the session environment by default.
 - Never echo the token, and never embed it in URLs, commits, or `.git/config`.
 - Set `GH_TOKEN` **inline per command** (the environment does not persist between tool calls). If no token is available, ask the user how to authenticate — do not assume a file path.
-- Plumbing: `agent.sh` forwards `GITHUB_TOKEN_AGENT`, `GITHUB_TOKEN_NERT`, `FORGEJO_TOKEN` into the container; the entrypoint writes `GH_TOKEN` + `FORGEJO_TOKEN` into each user's `~/.ssh/environment`.
+- Plumbing: `agent.sh` forwards `GITHUB_TOKEN_AGENT`, `GITHUB_TOKEN_NERT`, `FORGEJO_TOKEN`, `DEEPSEEK_API_KEY` into the container; the entrypoint writes `GH_TOKEN`, `FORGEJO_TOKEN`, and `DEEPSEEK_API_KEY` into each user's `~/.ssh/environment`.
+- `DEEPSEEK_API_KEY` is authoritative: the manually-set key in the running container's `~/.local/share/opencode/auth.json` must be removed (operator action on the running container, not a repo change) so opencode picks the env var.
 
 ## 4. Build / correction cycle (the intended workflow)
 

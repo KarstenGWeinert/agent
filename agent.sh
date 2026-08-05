@@ -70,6 +70,7 @@ run() {
     -e GITHUB_TOKEN_NERT \
     -e GITHUB_TOKEN_AGENT \
     -e FORGEJO_TOKEN \
+    -e DEEPSEEK_API_KEY \
     "$IMAGE_NAME"; then
     echo "❌ Failed to create container" >&2
     exit 1
