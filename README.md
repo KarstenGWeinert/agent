@@ -19,17 +19,15 @@ Danach per SSH einloggen:
 
 ```bash
 ssh agent@localhost -p 2222
-ssh nert@localhost -p 2222
 ```
 
 ## Benutzer
 
 | Benutzer | Rolle |
 |----------|-------|
-| `agent`  | Hauptnutzer (opencode, Agent-Skills) |
-| `nert`   | Zweitnutzer, passwortloses sudo |
+| `agent`  | Hauptnutzer (opencode, Agent-Skills, passwortloses sudo) |
 
-SSH erlaubt nur `agent` und `nert`, ausschließlich per Public Key (keine Passwörter, kein Root-Login).
+SSH erlaubt nur `agent`, ausschließlich per Public Key (keine Passwörter, kein Root-Login).
 
 ## Enthaltene Tools
 
@@ -47,7 +45,7 @@ SSH erlaubt nur `agent` und `nert`, ausschließlich per Public Key (keine Passw�
 ## Konfiguration
 
 - `agent.sh` — steuert Build/Run. Variablen: `IMAGE_NAME`, `CONTAINER_NAME`, `NETWORK_NAME`, `PORT_MAPPING` (Standard: `2222:22`).
-- `authorizedkeys` — derselbe Public Key für beide Benutzer.
+- `authorizedkeys` — derselbe Public Key für den Benutzer.
 - `hx_config.toml` / `tmux.conf` — Helix- bzw. tmux-Konfiguration.
 - `opencode/` — opencode-Konfiguration (`opencode.json`, `tui.json`, `commands/`, `skills/`).
 
