@@ -69,9 +69,13 @@ For every session found in step 2 whose id is **not** in the ledger set, in orde
 
 1. Export the session with opencode's native exporter:
    ```sh
-   opencode export <sessionID> > /tmp/session-logs-<repo>/sessions/<sessionID>.json
+   opencode export <sessionID> --sanitize > /tmp/session-logs-<repo>/sessions/<sessionID>.json
    ```
-   The output is a JSON object with a top-level `messages` array and an `info` key carrying `id`, `title`, `directory`, `model` (object with `id` and `providerID`), `cost` (float), `tokens` (object with `input`, `output`, `reasoning`, and `cache` → `{read, write}`), and `time` (`{created, updated}` in ms epoch). Use exactly this data — no bespoke SQLite handling, no devcontainer mount, no cost recomputation.
+   `--sanitize` redacts sensitive transcript and file data (message content, `directory`, `title`) while keeping the `info` block intact — all CSV-required fields survive (`id`, `model.id`, `cost`, token counts, timestamps).
+
+   `opencode export` prints a status line `Exporting session: ses_...` to **stderr**. This does not contaminate the JSON file when using `>` (stdout only). Suppress with `2>/dev/null` for cleaner logs if desired.
+
+   The output is a JSON object with a top-level `messages` array and an `info` key carrying `id`, `model` (object with `id` and `providerID`), `cost` (float), `tokens` (object with `input`, `output`, `reasoning`, and `cache` → `{read, write}`), and `time` (`{created, updated}` in ms epoch). Use exactly this data — no bespoke SQLite handling, no devcontainer mount, no cost recomputation.
 2. Append exactly one row to `/tmp/session-logs-<repo>/cost.csv` with these columns in this exact order:
    ```csv
    timestamp, session_id, model, tokens_input, tokens_output, tokens_reasoning, tokens_cache_read, cost
