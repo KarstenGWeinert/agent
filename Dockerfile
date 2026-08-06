@@ -1,7 +1,5 @@
 FROM ubuntu:24.04
 
-USER root
-
 ## System basics 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -44,12 +42,11 @@ RUN curl -sL "https://codeberg.org/forgejo-contrib/forgejo-cli/releases/download
     chmod +x /usr/local/bin/fj && \
     fj version
 
-## Create users: agent and nert (with passwordless sudo)
+## Create user: agent (with passwordless sudo)
 RUN useradd -m -s /bin/bash agent && \
-    useradd -m -s /bin/bash nert && \
-    usermod -aG sudo nert && \
-    echo "nert ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nert && \
-    chmod 0440 /etc/sudoers.d/nert
+    usermod -aG sudo agent && \
+    echo "agent ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/agent && \
+    chmod 0440 /etc/sudoers.d/agent
 
 ## Helix Editor
 RUN HELIX_VERSION=$(curl -s "https://api.github.com/repos/helix-editor/helix/releases/latest" | grep -Po '"tag_name": "\K[^"]+') && \
@@ -57,12 +54,10 @@ RUN HELIX_VERSION=$(curl -s "https://api.github.com/repos/helix-editor/helix/rel
     tar -C /opt -xf /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
     ln -sf /opt/helix-${HELIX_VERSION}-x86_64-linux/hx /usr/local/bin/hx && \
     rm /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
-	echo "export COLORTERM=truecolor" >> /home/nert/.bashrc && \
 	echo "export COLORTERM=truecolor" >> /home/agent/.bashrc
-COPY hx_config.toml /home/nert/.config/helix/config.toml
 COPY hx_config.toml /home/agent/.config/helix/config.toml
 
-## SSH Setup - ONLY agent and nert allowed, key-only authentication
+## SSH Setup - ONLY agent allowed, key-only authentication
 RUN mkdir -p /var/run/sshd && \
 	ssh-keygen -A && \
     sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && \
@@ -72,7 +67,7 @@ RUN mkdir -p /var/run/sshd && \
     echo "PermitEmptyPasswords no" >> /etc/ssh/sshd_config && \
     echo "KbdInteractiveAuthentication no" >> /etc/ssh/sshd_config && \
     echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config && \
-    echo "AllowUsers agent nert" >> /etc/ssh/sshd_config && \
+    echo "AllowUsers agent" >> /etc/ssh/sshd_config && \
 	echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config && \
     sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
 
@@ -92,27 +87,12 @@ ENV PATH="/opt/lea-venv/bin:${PATH}"
 
 ## Pre-create directories and ensure correct ownership
 RUN mkdir -p /home/agent/.local/share /home/agent/.config && \
-    mkdir -p /home/nert/.local/share /home/nert/.config && \
-    chown -R agent:agent /home/agent && \
-    chown -R nert:nert /home/nert
-
-USER agent
-WORKDIR /home/agent
-
-# Configure Git 
-RUN git config --global credential.https://github.com.helper "!gh auth git-credential" && \                            
-    git config --global credential.http://forgejo:3000.helper '!f() { echo "username=kgw-agent"; echo "password=$FORGEJO_TOKEN"; }; f' && \
-    git config --global user.name "OpenCode Agent" && \
-    git config --global user.email "agent@opencode.local" 
-
-# opencode
-RUN curl -fsSL https://opencode.ai/install | bash
-
-USER root
+    mkdir -p /home/agent/.local/share/forgejo-cli && \
+    chown -R agent:agent /home/agent
 
 # === Frequently changing customizations start here ===
 
-## Copy authorizedkeys (same public key file works for both users)
+## Copy authorizedkeys
 COPY authorizedkeys /tmp/authorizedkeys
 
 ## Per-user GitHub tokens for SSH login shells
@@ -121,21 +101,17 @@ RUN echo 'GITHUB_TOKEN_AGENT' >> /etc/environment && \
     echo 'FORGEJO_TOKEN' >> /etc/environment && \
     echo 'DEEPSEEK_API_KEY' >> /etc/environment
 
-RUN mkdir -p /home/agent/.ssh /home/nert/.ssh && \
+RUN mkdir -p /home/agent/.ssh && \
     cp /tmp/authorizedkeys /home/agent/.ssh/authorized_keys && \
-    cp /tmp/authorizedkeys /home/nert/.ssh/authorized_keys && \
     chown -R agent:agent /home/agent/.ssh && \
-    chown -R nert:nert /home/nert/.ssh && \
-    chmod 700 /home/agent/.ssh /home/nert/.ssh && \
-    chmod 600 /home/agent/.ssh/authorized_keys /home/nert/.ssh/authorized_keys && \
+    chmod 700 /home/agent/.ssh && \
+    chmod 600 /home/agent/.ssh/authorized_keys && \
     rm /tmp/authorizedkeys
 	
 ## tmux
 COPY tmux.conf /etc/tmux.conf
 RUN echo 'if [ -z "$TMUX" ] && [[ $- == *i* ]]; then exec tmux new-session -A -s main; fi' >> /home/agent/.bashrc && \
-    echo 'if [ -z "$TMUX" ] && [[ $- == *i* ]]; then exec tmux new-session -A -s main; fi' >> /home/nert/.bashrc && \
-	chown -R agent:agent /home/agent/.bashrc && \
-    chown -R nert:nert /home/nert/.bashrc
+	chown -R agent:agent /home/agent/.bashrc
 
 # opencode
 RUN mkdir -p /home/agent/.config && chown agent:agent /home/agent/.config
@@ -166,10 +142,26 @@ RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*
     echo ")" >> /usr/lib/R/etc/Rprofile.site && \
     R -q -e 'install.packages("pak", repos = "https://r-lib.github.io/p/pak/stable")' && \
     R -q -e 'pak::pkg_install(c("remotes", "data.table", "duckdb", "shiny", "bslib", "reactable", "plotly", "pdftools", \
-		"RhpcBLASctl", "nanoparquet", "httr", "jsonlite", "R.utils", "roxygen2", "devtools", "tinytest", "languageserver"))'
+		"RhpcBLASctl", "nanoparquet", "httr", "jsonlite", "jose", "R.utils", "roxygen2", "devtools", "tinytest", "languageserver"))'
+
+USER agent
+WORKDIR /home/agent
+
+# Configure Git 
+RUN git config --global credential.https://github.com.helper "!gh auth git-credential" && \                            
+    git config --global credential.http://forgejo:3000.helper '!f() { echo "username=kgw-agent"; echo "password=$FORGEJO_TOKEN"; }; f' && \
+    git config --global user.name "OpenCode Agent" && \
+    git config --global user.email "agent@opencode.local" 
+
+# opencode
+RUN curl -fsSL https://opencode.ai/install | bash
+
+# lintr config
+COPY --chown=agent:agent lintr_config /home/agent/.lintr
+
+USER root
 
 ## sshd requires root
-USER root
 HEALTHCHECK --interval=60s --timeout=20s --start-period=120s --retries=3 \
     CMD bash -c 'echo -n > /dev/tcp/127.0.0.1/22' || exit 1
 EXPOSE 22
@@ -177,17 +169,15 @@ EXPOSE 22
 ## Entrypoint 
 RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \
 	echo 'echo "GH_TOKEN=${GITHUB_TOKEN_AGENT}" > /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'echo "GH_TOKEN=${GITHUB_TOKEN_NERT}" > /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'echo "FORGEJO_TOKEN=${FORGEJO_TOKEN}" >> /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'echo "FORGEJO_TOKEN=${FORGEJO_TOKEN}" >> /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'echo "DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}" >> /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'echo "DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}" >> /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'chown agent:agent /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'chown nert:nert /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'chmod 600 /home/agent/.ssh/environment /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
+	echo 'cat > /home/agent/.local/share/forgejo-cli/keys.json <<EOF' >> /usr/local/bin/entrypoint.sh && \
+	echo '{"hosts":{"forgejo:3000":{"type":"Application","token":"$FORGEJO_TOKEN"}},"aliases":{},"default_ssh":[]}' >> /usr/local/bin/entrypoint.sh && \
+	echo 'EOF' >> /usr/local/bin/entrypoint.sh && \
+	echo 'chown agent:agent /home/agent/.ssh/environment /home/agent/.local/share/forgejo-cli/keys.json' >> /usr/local/bin/entrypoint.sh && \
+	echo 'chmod 600 /home/agent/.ssh/environment /home/agent/.local/share/forgejo-cli/keys.json' >> /usr/local/bin/entrypoint.sh && \
 	echo 'exec /usr/sbin/sshd -D' >> /usr/local/bin/entrypoint.sh && \
 	chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
 

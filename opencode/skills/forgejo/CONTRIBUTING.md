@@ -43,17 +43,21 @@ fj --host http://forgejo:3000 <command>
 
 ### Authentication
 
-`fj auth login` opens a browser (not useful headless). Use `fj auth add-key` with the `$FORGEJO_TOKEN` instead:
+`fj auth login` opens a browser (not useful headless). Use `fj auth add-token` with the `$FORGEJO_TOKEN` instead:
 
 ```bash
-cd /repo && echo "$FORGEJO_TOKEN" | fj auth add-key <user>
+echo "$FORGEJO_TOKEN" | fj auth add-token
 ```
+
+Note: `add-key` is an alias for `add-token`, but any positional argument is treated as the *token value*,
+overriding stdin. If you write `echo "$FORGEJO_TOKEN" | fj auth add-token kgw-agent`, the username
+`kgw-agent` ends up stored as the token — not the value from stdin. Always pipe without a positional arg.
 
 **First use in a fresh environment:** the first `fj` call prints `keys file not found, creating` and then
 `401 Unauthorized` until a key is registered. Bootstrap once:
 
 ```bash
-echo "$FORGEJO_TOKEN" | fj --host http://forgejo:3000 auth add-key kgw-agent
+echo "$FORGEJO_TOKEN" | fj --host http://forgejo:3000 auth add-token
 fj --host http://forgejo:3000 whoami   # => "currently signed in to kgw-agent@forgejo:3000"
 ```
 
@@ -92,12 +96,65 @@ skill — see that skill for the full vocabulary.
 
 ### Issue and PR body hygiene
 
-Always create issues and PRs through the CLI — `fj issue create`, `fj pr create` — and never hand-assemble JSON payloads with `curl` for create/edit operations. The CLI builds the payload itself; hand-built curl payloads are how escaping/encoding artefacts sneak into bodies (e.g. `invalid character '`' in string escape code`). Raw `curl` is reserved for the infrastructure-only cases in `INFRASTRUCTURE.md` (runner registration, registry tokens, actions logs).
+Always create issues and PRs through the CLI — `fj issue create`, `fj pr create` — and never hand-assemble JSON payloads with `curl` for create/edit operations (adding comments via curl is the one exception; see the curl cookbook below). The CLI builds the payload itself; hand-built curl payloads are how escaping/encoding artefacts sneak into bodies (e.g. `invalid character '`' in string escape code`). Raw `curl` is reserved for the infrastructure-only cases in `INFRASTRUCTURE.md` (runner registration, registry tokens, actions logs) and the documented fallback workflows below.
 
 ### Gotchas
 
 - **`--body` vs `--body-file`:** `--body` breaks on shell-special characters (backticks, parentheses, umlauts). For bodies with special characters, write the body to a temp file and pass `--body-file <file>`.
 - **`-R` / `--cwd`:** `-R, --remote <REMOTE>` is a *local git remote name*, not a repo path. Running e.g. `fj -R kgw/bfett ...` outside a repo directory fails with `no repo info`. Either pass `--cwd` or run inside the repo directory.
 - **Labels:** `fj issue create` has no `--labels` option — labels cannot be set at creation. See the "Issue labels" section above for the full workflow.
+- **Issue comments:** `fj issue view <id>` does **not** show comments by default. Use subcommands: `fj issue view <id> comments` (list comments), `fj issue view <id> comment` / `fj issue view <id> body` (show individual comment/body), `fj issue view <id> assignees`. The `fj` CLI has no subcommand to *create* a comment — use the curl fallback below for that.
+
+### Curl fallback cookbook
+
+**Use `fj` whenever possible.** The curl patterns below are a fallback for when `fj auth add-token` is broken (401 errors), for reading comments (`fj issue view` hides them by default), or for adding comments (no `fj` subcommand exists yet).
+
+Replace `{owner}/{repo}` with the actual values (e.g. `kgw-agent/bfett`).
+
+**View an issue:**
+```bash
+curl -H "Authorization: token $FORGEJO_TOKEN" \
+  "http://forgejo:3000/api/v1/repos/{owner}/{repo}/issues/{id}"
+```
+
+**View issue comments:**
+```bash
+curl -H "Authorization: token $FORGEJO_TOKEN" \
+  "http://forgejo:3000/api/v1/repos/{owner}/{repo}/issues/{id}/comments"
+```
+
+**Add a comment:**
+```bash
+curl -H "Authorization: token $FORGEJO_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"body":"comment text"}' \
+  "http://forgejo:3000/api/v1/repos/{owner}/{repo}/issues/{id}/comments"
+```
+
+**Update labels:**
+```bash
+curl -X PUT \
+  -H "Authorization: token $FORGEJO_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"labels":[1,2]}' \
+  "http://forgejo:3000/api/v1/repos/{owner}/{repo}/issues/{id}/labels"
+```
+
+**Create an issue:**
+```bash
+curl -H "Authorization: token $FORGEJO_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Title","body":"Body"}' \
+  "http://forgejo:3000/api/v1/repos/{owner}/{repo}/issues"
+```
+
+**Body-escaping note:** For complex bodies (backticks, parentheses, umlauts, newlines), inline `-d` with single-quoted JSON will break. Use `--data-raw` with a heredoc, or write the body to a file and pass `-d @<file>`:
+```bash
+curl -H "Authorization: token $FORGEJO_TOKEN" \
+  -H "Content-Type: application/json" \
+  --data-raw @- "http://forgejo:3000/api/v1/repos/{owner}/{repo}/issues" <<'EOF'
+{"title":"Title","body":"Complex body with `backticks` and (parens)"}
+EOF
+```
 
 
