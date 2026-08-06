@@ -93,6 +93,7 @@ ENV PATH="/opt/lea-venv/bin:${PATH}"
 ## Pre-create directories and ensure correct ownership
 RUN mkdir -p /home/agent/.local/share /home/agent/.config && \
     mkdir -p /home/nert/.local/share /home/nert/.config && \
+    mkdir -p /home/agent/.local/share/forgejo-cli /home/nert/.local/share/forgejo-cli && \
     chown -R agent:agent /home/agent && \
     chown -R nert:nert /home/nert
 
@@ -182,9 +183,15 @@ RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \
 	echo 'echo "FORGEJO_TOKEN=${FORGEJO_TOKEN}" >> /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'echo "DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}" >> /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
 	echo 'echo "DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}" >> /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'chown agent:agent /home/agent/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'chown nert:nert /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
-	echo 'chmod 600 /home/agent/.ssh/environment /home/nert/.ssh/environment' >> /usr/local/bin/entrypoint.sh && \
+	echo 'cat > /home/agent/.local/share/forgejo-cli/keys.json <<EOF' >> /usr/local/bin/entrypoint.sh && \
+	echo '{"hosts":{"forgejo:3000":{"type":"Application","token":"$FORGEJO_TOKEN"}},"aliases":{},"default_ssh":[]}' >> /usr/local/bin/entrypoint.sh && \
+	echo 'EOF' >> /usr/local/bin/entrypoint.sh && \
+	echo 'cat > /home/nert/.local/share/forgejo-cli/keys.json <<EOF' >> /usr/local/bin/entrypoint.sh && \
+	echo '{"hosts":{"forgejo:3000":{"type":"Application","token":"$FORGEJO_TOKEN"}},"aliases":{},"default_ssh":[]}' >> /usr/local/bin/entrypoint.sh && \
+	echo 'EOF' >> /usr/local/bin/entrypoint.sh && \
+	echo 'chown agent:agent /home/agent/.ssh/environment /home/agent/.local/share/forgejo-cli/keys.json' >> /usr/local/bin/entrypoint.sh && \
+	echo 'chown nert:nert /home/nert/.ssh/environment /home/nert/.local/share/forgejo-cli/keys.json' >> /usr/local/bin/entrypoint.sh && \
+	echo 'chmod 600 /home/agent/.ssh/environment /home/nert/.ssh/environment /home/agent/.local/share/forgejo-cli/keys.json /home/nert/.local/share/forgejo-cli/keys.json' >> /usr/local/bin/entrypoint.sh && \
 	echo 'exec /usr/sbin/sshd -D' >> /usr/local/bin/entrypoint.sh && \
 	chmod +x /usr/local/bin/entrypoint.sh
 
