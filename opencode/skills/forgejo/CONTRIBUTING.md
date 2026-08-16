@@ -3,6 +3,7 @@
 ## Local Forgejo Environment
 
 - **Host:** `http://forgejo:3000` 
+- **Version:** Forgejo 16.0.2 (gitea 1.22.0 base)
 - **Git config:** `~/.gitconfig` has `gh` as credential helper for GitHub (not forgejo)
 
 ### Secure Git Cloning
@@ -104,6 +105,7 @@ Always create issues and PRs through the CLI — `fj issue create`, `fj pr creat
 - **`-R` / `--cwd`:** `-R, --remote <REMOTE>` is a *local git remote name*, not a repo path. Running e.g. `fj -R kgw/bfett ...` outside a repo directory fails with `no repo info`. Either pass `--cwd` or run inside the repo directory.
 - **Labels:** `fj issue create` has no `--labels` option — labels cannot be set at creation. See the "Issue labels" section above for the full workflow.
 - **Issue comments:** `fj issue view <id>` does **not** show comments by default. Use subcommands: `fj issue view <id> comments` (list comments), `fj issue view <id> comment` / `fj issue view <id> body` (show individual comment/body), `fj issue view <id> assignees`. The `fj` CLI has no subcommand to *create* a comment — use the curl fallback below for that.
+- **Project boards (no API):** Forgejo exposes no REST API for project boards and `fj` has no board/project subcommand, so an issue cannot be created on a board programmatically. Do **not** try to target the board (e.g. the "Aktiv" kanban) — create a plain issue with `fj issue create` and note that board placement requires a human via the web UI.
 
 ### Curl fallback cookbook
 
