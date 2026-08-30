@@ -56,6 +56,14 @@ RUN HELIX_VERSION=$(curl -s "https://api.github.com/repos/helix-editor/helix/rel
     rm /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
 	echo "export COLORTERM=truecolor" >> /home/agent/.bashrc
 COPY hx_config.toml /home/agent/.config/helix/config.toml
+COPY hx_languages.toml /home/agent/.config/helix/languages.toml
+
+## sqls (SQL language server)
+RUN SQLS_VERSION=$(curl -s https://api.github.com/repos/sqls-server/sqls/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
+    curl -sL "https://github.com/sqls-server/sqls/releases/download/v${SQLS_VERSION}/sqls-linux-${SQLS_VERSION}.zip" -o /tmp/sqls.zip && \
+    unzip /tmp/sqls.zip -d /usr/local/bin/ && \
+    chmod +x /usr/local/bin/sqls && \
+    rm /tmp/sqls.zip
 
 ## SSH Setup - ONLY agent allowed, key-only authentication
 RUN mkdir -p /var/run/sshd && \
