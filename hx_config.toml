@@ -14,3 +14,8 @@ display-inlay-hints = false
 normal = "block"
 insert = "bar"
 select = "underline"
+
+# Dateiauswahl & globale Suche: versteckte und gitignored Dateien anzeigen
+[editor.file-picker]
+hidden = false
+git-ignore = false

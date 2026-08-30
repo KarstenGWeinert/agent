@@ -1,0 +1,6 @@
+[[language]]
+name = "sql"
+language-servers = ["sqls"]
+
+[language-server.sqls]
+command = "sqls"
