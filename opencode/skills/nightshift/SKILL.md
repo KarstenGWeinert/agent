@@ -31,7 +31,7 @@ Ensure the shared integration branch `nightshift` exists:
 List all open tickets carrying the `ready-for-agent` label on the current repo:
 
 - GitHub: `gh issue list --label ready-for-agent --state open`.
-- Forgejo: `fj issue search` filtered to the same label.
+- Forgejo: `fj issue search` filtered to the same label — see the `forgejo` skill for the exact flags (the label filter is `--labels`, plural; there is **no** `--limit`).
 
 Order the backlog by `createdAt` ascending — oldest first, first-in-first-out. Tickets are picked up in this order and never reordered by priority (no priority taxonomy exists on either tracker). Tickets the run itself relabels are picked up only on a later run.
 

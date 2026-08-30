@@ -71,7 +71,7 @@ fj --host http://forgejo:3000 whoami   # => "currently signed in to kgw-agent@fo
 | Create PR | `fj pr create --base <BASE> --head <HEAD> [TITLE] --body "..."` — title is positional, no `--title` flag |
 | Merge PR | `fj pr merge <number>` (humans only — the agent lacks merge access) |
 | View PR | `fj pr view <number>` |
-| List issues | `fj issue search` |
+| List issues | `fj issue search --repo <owner>/<repo> --labels <label> --state open` |
 | Create issue | `fj issue create [TITLE] --body "..."` — title is positional, no `--title` flag |
 | View repo labels | `fj repo labels <owner>/<repo> view` |
 | Add label to issue | `fj issue edit <number> labels --add <label>` |
@@ -81,6 +81,22 @@ fj --host http://forgejo:3000 whoami   # => "currently signed in to kgw-agent@fo
 | List tags | `fj tag list` |
 | Create tag | `fj tag create <name> <ref>` |
 | Dispatch workflow | `fj actions dispatch pipeline.yml <branch>` |
+
+### Issue search
+
+`fj issue search` filters a repo's issues. The flag set (verbatim, from `fj issue search --help`):
+
+- `--labels` (alias `-l`, **plural**, comma-separated) — not `--label`
+- `--state open|closed|all` (alias `-s`, default `open`)
+- `--repo` / `--remote` / `--cwd` — a repo is required unless run inside the repo directory (else `Error: can't figure what repo to access`)
+- `--creator` / `--assignee` (aliases `-c` / `-a`)
+- free-text `[QUERY]` positional
+
+There is **no** `--limit` flag (nor `--page` / `--json`) — unlike `gh issue list --limit N`. To cap results, filter by `--labels`/`--state` or pipe the output yourself.
+
+```bash
+fj --host http://forgejo:3000 issue search --repo <owner>/<repo> --labels ready-for-agent --state open
+```
 
 ### Issue labels
 
