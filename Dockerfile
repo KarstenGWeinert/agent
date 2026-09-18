@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 ## System basics 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        openssh-server git wget unzip curl tmux less htop \
+        openssh-server git wget unzip curl tmux less htop file xxd \
         r-base r-base-dev libcurl4-openssl-dev \
         libcurl4 libxml2-dev libssl-dev build-essential xclip ripgrep fd-find fzf \
 	cmake libuv1-dev pandoc poppler-data libpoppler-cpp-dev \
