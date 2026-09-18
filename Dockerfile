@@ -11,7 +11,7 @@ RUN apt-get update && \
         sudo gh tzdata \
 	libfontconfig1-dev libfreetype6-dev libfribidi-dev libgit2-dev \
 	libharfbuzz-dev libtiff-dev libwebp-dev libx11-dev \
-	software-properties-common python3-pip \ 
+	software-properties-common python3-pip \
     && add-apt-repository -y ppa:deadsnakes/ppa  \
     && apt-get update && apt-get install -y python3.14 python3.14-venv \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
@@ -157,7 +157,7 @@ USER agent
 WORKDIR /home/agent
 
 # Configure Git 
-RUN git config --global credential.https://github.com.helper "!gh auth git-credential" && \                            
+RUN git config --global credential.https://github.com.helper "!gh auth git-credential" && \
     git config --global credential.http://forgejo:3000.helper '!f() { echo "username=kgw-agent"; echo "password=$FORGEJO_TOKEN"; }; f' && \
     git config --global user.name "OpenCode Agent" && \
     git config --global user.email "agent@opencode.local" 
