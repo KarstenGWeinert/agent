@@ -34,6 +34,7 @@ ENV RUSTUP_HOME=/opt/rust
 ENV CARGO_HOME=/opt/rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path && \
     /opt/rust/bin/cargo install tokei --root /usr/local && \
+    /opt/rust/bin/cargo install sd --root /usr/local && \
     rm -rf /opt/rust
 
 ## Forgejo-CLI v0.6.0 
