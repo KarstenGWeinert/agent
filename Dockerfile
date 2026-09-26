@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 ## System basics 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        openssh-server git wget unzip curl tmux less htop \
+        openssh-server git wget unzip curl tmux less htop file xxd \
         r-base r-base-dev libcurl4-openssl-dev \
         libcurl4 libxml2-dev libssl-dev build-essential xclip ripgrep fd-find fzf \
 	cmake libuv1-dev pandoc poppler-data libpoppler-cpp-dev \
@@ -11,7 +11,7 @@ RUN apt-get update && \
         sudo gh tzdata \
 	libfontconfig1-dev libfreetype6-dev libfribidi-dev libgit2-dev \
 	libharfbuzz-dev libtiff-dev libwebp-dev libx11-dev \
-	software-properties-common python3-pip \ 
+	software-properties-common python3-pip \
     && add-apt-repository -y ppa:deadsnakes/ppa  \
     && apt-get update && apt-get install -y python3.14 python3.14-venv \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
@@ -34,6 +34,7 @@ ENV RUSTUP_HOME=/opt/rust
 ENV CARGO_HOME=/opt/rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path && \
     /opt/rust/bin/cargo install tokei --root /usr/local && \
+    /opt/rust/bin/cargo install sd --root /usr/local && \
     rm -rf /opt/rust
 
 ## Forgejo-CLI v0.6.0 
@@ -156,7 +157,7 @@ USER agent
 WORKDIR /home/agent
 
 # Configure Git 
-RUN git config --global credential.https://github.com.helper "!gh auth git-credential" && \                            
+RUN git config --global credential.https://github.com.helper "!gh auth git-credential" && \
     git config --global credential.http://forgejo:3000.helper '!f() { echo "username=kgw-agent"; echo "password=$FORGEJO_TOKEN"; }; f' && \
     git config --global user.name "OpenCode Agent" && \
     git config --global user.email "agent@opencode.local" 
