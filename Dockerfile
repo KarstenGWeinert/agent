@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 ## System basics 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        openssh-server git wget unzip curl tmux less htop file xxd \
+        openssh-server git wget unzip curl less htop file xxd \
         r-base r-base-dev libcurl4-openssl-dev \
         libcurl4 libxml2-dev libssl-dev build-essential xclip ripgrep fd-find fzf \
 	cmake libuv1-dev pandoc poppler-data libpoppler-cpp-dev \
@@ -117,10 +117,13 @@ RUN mkdir -p /home/agent/.ssh && \
     chmod 600 /home/agent/.ssh/authorized_keys && \
     rm /tmp/authorizedkeys
 	
-## tmux
-COPY tmux.conf /etc/tmux.conf
-RUN echo 'if [ -z "$TMUX" ] && [[ $- == *i* ]]; then exec tmux new-session -A -s main; fi' >> /home/agent/.bashrc && \
-	chown -R agent:agent /home/agent/.bashrc
+## herdr (terminal workspace manager)
+RUN curl -sL "https://github.com/herdrdev/herdr/releases/download/v0.9.1/herdr-linux-x86_64" -o /usr/local/bin/herdr && \
+    chmod +x /usr/local/bin/herdr && \
+    herdr --version
+COPY --chown=agent:agent herdr_config.toml /home/agent/.config/herdr/config.toml
+RUN echo 'if [ -z "$HERDR_ENV" ] && [[ $- == *i* ]]; then exec herdr; fi' >> /home/agent/.bashrc && \
+    chown -R agent:agent /home/agent/.bashrc
 
 # opencode
 RUN mkdir -p /home/agent/.config && chown agent:agent /home/agent/.config
@@ -164,6 +167,9 @@ RUN git config --global credential.https://github.com.helper "!gh auth git-crede
 
 # opencode
 RUN curl -fsSL https://opencode.ai/install | bash
+
+# herdr opencode integration
+RUN herdr integration install opencode
 
 # lintr config
 COPY --chown=agent:agent lintr_config /home/agent/.lintr
