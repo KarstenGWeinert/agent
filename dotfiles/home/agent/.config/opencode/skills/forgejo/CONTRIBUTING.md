@@ -73,6 +73,7 @@ fj --host http://forgejo:3000 whoami   # => "currently signed in to kgw-agent@fo
 | View PR | `fj pr view <number>` |
 | List issues | `fj issue search --repo <owner>/<repo> --labels <label> --state open` |
 | Create issue | `fj issue create [TITLE] --body "..."` — title is positional, no `--title` flag |
+| Comment on issue | `fj issue comment <number> [BODY]` — omit BODY to open editor; use `--body-file <file>` for special chars |
 | View repo labels | `fj repo labels <owner>/<repo> view` |
 | Add label to issue | `fj issue edit <number> labels --add <label>` |
 | Remove label from issue | `fj issue edit <number> labels --rm <label>` |
@@ -107,25 +108,25 @@ fj --host http://forgejo:3000 issue search --repo <owner>/<repo> --labels ready-
 - List labels: `fj issue view <number>` shows the labels on an issue; `fj repo labels <owner>/<repo> view` shows the repo's full set
 - Manage label definitions: `fj repo labels <repo> create <name> <color> -d "<desc>"` (also `edit`, `delete`)
 
-Labels are matched by **name**. The canonical triage set (`ready-for-agent`, `needs-triage`, `bug`,
-`enhancement`, `refactor`, `ready-for-human`, `wontfix`, `needs-info`) is defined by the `setup-repo`
-skill — see that skill for the full vocabulary.
+Labels are matched by **name**. The canonical triage set on `kgw/bfett` (as of the last `fj repo labels kgw/bfett view`) is: `bug`, `enhancement`, `needs-info`, `needs-triage`, `ready-for-agent`, `ready-for-human`, `refactor`, `sector-gap`, `wontfix`. The `setup-repo` skill defines the full vocabulary and semantics.
 
 ### Issue and PR body hygiene
 
-Always create issues and PRs through the CLI — `fj issue create`, `fj pr create` — and never hand-assemble JSON payloads with `curl` for create/edit operations (adding comments via curl is the one exception; see the curl cookbook below). The CLI builds the payload itself; hand-built curl payloads are how escaping/encoding artefacts sneak into bodies (e.g. `invalid character '`' in string escape code`). Raw `curl` is reserved for the infrastructure-only cases in `INFRASTRUCTURE.md` (runner registration, registry tokens, actions logs) and the documented fallback workflows below.
+Always create issues and PRs through the CLI — `fj issue create`, `fj pr create` — and never hand-assemble JSON payloads with `curl` for create/edit operations. The CLI builds the payload itself; hand-built curl payloads are how escaping/encoding artefacts sneak into bodies (e.g. `invalid character '`' in string escape code`). Raw `curl` is reserved for the infrastructure-only cases in `INFRASTRUCTURE.md` (runner registration, registry tokens, actions logs) and the documented fallback workflows below.
 
 ### Gotchas
 
 - **`--body` vs `--body-file`:** `--body` breaks on shell-special characters (backticks, parentheses, umlauts). For bodies with special characters, write the body to a temp file and pass `--body-file <file>`.
 - **`-R` / `--cwd`:** `-R, --remote <REMOTE>` is a *local git remote name*, not a repo path. Running e.g. `fj -R kgw/bfett ...` outside a repo directory fails with `no repo info`. Either pass `--cwd` or run inside the repo directory.
 - **Labels:** `fj issue create` has no `--labels` option — labels cannot be set at creation. See the "Issue labels" section above for the full workflow.
-- **Issue comments:** `fj issue view <id>` does **not** show comments by default. Use subcommands: `fj issue view <id> comments` (list comments), `fj issue view <id> comment` / `fj issue view <id> body` (show individual comment/body), `fj issue view <id> assignees`. The `fj` CLI has no subcommand to *create* a comment — use the curl fallback below for that.
+- **No `fj label` subcommand:** `fj label` does not exist (`error: unrecognized subcommand 'label'`). Labels live under `fj repo labels <owner>/<repo>` (subcommands `view`/`create`/`edit`/`delete`) and `fj issue edit <n> labels` (`--add`/`--rm`).
+- **Issue comments:** `fj issue view <id>` does **not** show comments by default. Use subcommands: `fj issue view <id> comments` (list comments), `fj issue view <id> comment` / `fj issue view <id> body` (show individual comment/body), `fj issue view <id> assignees`. To *create* a comment: `fj issue comment <id> [BODY]` (opens editor if BODY omitted) or `fj issue comment <id> --body-file <file>` (prefer for special chars).
+- **Issue dependencies (REST-only):** `fj` has no dependency/block subcommand. The endpoints (gated by `internal_tracker.enable_issue_dependencies`) are `GET|POST|DELETE /api/v1/repos/{owner}/{repo}/issues/{index}/dependencies` and `GET|POST|DELETE /api/v1/repos/{owner}/{repo}/issues/{index}/blocks`. Semantics: `POST .../issues/{index}/dependencies` makes the URL issue depend on the body issue; `POST .../issues/{index}/blocks` blocks the body issue by the URL issue. Gotcha: the POST body must be the full `IssueMeta` — `{"owner":"kgw","repo":"bfett","index":107}` (JSON key is `repo`, **not** `name`). Sending only `{"index":107}` returns a misleading `404 {"message":"IsErrRepoNotExist", "owner_name":"", "name":""}` — the empty fields come from the unbound form, not the URL path.
 - **Project boards (no API):** Forgejo exposes no REST API for project boards and `fj` has no board/project subcommand, so an issue cannot be created on a board programmatically. Do **not** try to target the board (e.g. the "Aktiv" kanban) — create a plain issue with `fj issue create` and note that board placement requires a human via the web UI.
 
 ### Curl fallback cookbook
 
-**Use `fj` whenever possible.** The curl patterns below are a fallback for when `fj auth add-token` is broken (401 errors), for reading comments (`fj issue view` hides them by default), or for adding comments (no `fj` subcommand exists yet).
+**Use `fj` whenever possible.** The curl patterns below are a fallback for when `fj auth add-token` is broken (401 errors) or for reading comments (`fj issue view` hides them by default).
 
 Replace `{owner}/{repo}` with the actual values (e.g. `kgw-agent/bfett`).
 
@@ -141,12 +142,10 @@ curl -H "Authorization: token $FORGEJO_TOKEN" \
   "http://forgejo:3000/api/v1/repos/{owner}/{repo}/issues/{id}/comments"
 ```
 
-**Add a comment:**
+**List labels:**
 ```bash
 curl -H "Authorization: token $FORGEJO_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"body":"comment text"}' \
-  "http://forgejo:3000/api/v1/repos/{owner}/{repo}/issues/{id}/comments"
+  "http://forgejo:3000/api/v1/repos/{owner}/{repo}/labels"
 ```
 
 **Update labels:**
@@ -164,6 +163,11 @@ curl -H "Authorization: token $FORGEJO_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"Title","body":"Body"}' \
   "http://forgejo:3000/api/v1/repos/{owner}/{repo}/issues"
+```
+
+**Live API spec:** `GET /swagger.v1.json` is the live OpenAPI spec (`/api/swagger.json` and `/swagger.json` return 404):
+```bash
+curl -s "http://forgejo:3000/swagger.v1.json"
 ```
 
 **Body-escaping note:** For complex bodies (backticks, parentheses, umlauts, newlines), inline `-d` with single-quoted JSON will break. Use `--data-raw` with a heredoc, or write the body to a file and pass `-d @<file>`:

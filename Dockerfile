@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 ## System basics 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        openssh-server git wget unzip curl tmux less htop file xxd \
+        openssh-server git wget unzip curl less htop file xxd \
         r-base r-base-dev libcurl4-openssl-dev \
         libcurl4 libxml2-dev libssl-dev build-essential xclip ripgrep fd-find fzf \
 	cmake libuv1-dev pandoc poppler-data libpoppler-cpp-dev \
@@ -56,8 +56,8 @@ RUN HELIX_VERSION=$(curl -s "https://api.github.com/repos/helix-editor/helix/rel
     ln -sf /opt/helix-${HELIX_VERSION}-x86_64-linux/hx /usr/local/bin/hx && \
     rm /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
 	echo "export COLORTERM=truecolor" >> /home/agent/.bashrc
-COPY hx_config.toml /home/agent/.config/helix/config.toml
-COPY hx_languages.toml /home/agent/.config/helix/languages.toml
+COPY dotfiles/home/agent/.config/helix/config.toml /home/agent/.config/helix/config.toml
+COPY dotfiles/home/agent/.config/helix/languages.toml /home/agent/.config/helix/languages.toml
 
 ## sqls (SQL language server)
 RUN SQLS_VERSION=$(curl -s https://api.github.com/repos/sqls-server/sqls/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
@@ -117,14 +117,17 @@ RUN mkdir -p /home/agent/.ssh && \
     chmod 600 /home/agent/.ssh/authorized_keys && \
     rm /tmp/authorizedkeys
 	
-## tmux
-COPY tmux.conf /etc/tmux.conf
-RUN echo 'if [ -z "$TMUX" ] && [[ $- == *i* ]]; then exec tmux new-session -A -s main; fi' >> /home/agent/.bashrc && \
-	chown -R agent:agent /home/agent/.bashrc
+## herdr (terminal workspace manager)
+RUN curl -sL "https://github.com/herdrdev/herdr/releases/download/v0.9.1/herdr-linux-x86_64" -o /usr/local/bin/herdr && \
+    chmod +x /usr/local/bin/herdr && \
+    herdr --version
+COPY --chown=agent:agent dotfiles/home/agent/.config/herdr/config.toml /home/agent/.config/herdr/config.toml
+RUN echo 'if [ -z "$HERDR_ENV" ] && [[ $- == *i* ]]; then exec herdr; fi' >> /home/agent/.bashrc && \
+    chown -R agent:agent /home/agent/.bashrc
 
 # opencode
 RUN mkdir -p /home/agent/.config && chown agent:agent /home/agent/.config
-COPY --chown=agent:agent opencode/ /home/agent/.config/opencode/
+COPY --chown=agent:agent dotfiles/home/agent/.config/opencode/ /home/agent/.config/opencode/
 
 ## mattpocock engineering skills (installed at build time from upstream)
 RUN git clone --depth 1 https://github.com/mattpocock/skills /tmp/mattpocock-skills && \
@@ -153,6 +156,13 @@ RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*
     R -q -e 'pak::pkg_install(c("remotes", "data.table", "duckdb", "shiny", "bslib", "reactable", "plotly", "pdftools", \
 		"RhpcBLASctl", "nanoparquet", "httr", "jsonlite", "jose", "R.utils", "roxygen2", "devtools", "tinytest", "languageserver", "lpSolveAPI", "pals"))'
 
+## Node.js (for Pi)
+RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz" -o /tmp/node.tar.xz && \
+    tar -C /usr/local --strip-components=1 -xf /tmp/node.tar.xz && \
+    rm /tmp/node.tar.xz && \
+    node --version && \
+    npm --version
+
 USER agent
 WORKDIR /home/agent
 
@@ -165,8 +175,16 @@ RUN git config --global credential.https://github.com.helper "!gh auth git-crede
 # opencode
 RUN curl -fsSL https://opencode.ai/install | bash
 
+# herdr opencode integration
+RUN herdr integration install opencode
+
+## Pi (agent harness)
+ENV PATH="/home/agent/.local/bin:${PATH}"
+RUN npm install -g --prefix /home/agent/.local --ignore-scripts @earendil-works/pi-coding-agent && \
+    pi --version
+
 # lintr config
-COPY --chown=agent:agent lintr_config /home/agent/.lintr
+COPY --chown=agent:agent dotfiles/home/agent/.lintr /home/agent/.lintr
 
 USER root
 

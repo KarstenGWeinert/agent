@@ -1,0 +1,8 @@
+onboarding = false
+
+[keys]
+prefix = "ctrl+space"
+
+[advanced]
+# ~50k rendered lines of scrollback (tmux: history-limit 50000); herdr measures bytes
+scrollback_limit_bytes = 50000000

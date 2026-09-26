@@ -1,6 +1,6 @@
 # agent
 
-Ein Docker-Image für einen SSH-fähigen Agent-Entwicklungscontainer mit vorinstallierter Toolchain (R, Python/lea, DuckDB, Helix, opencode) und Agent-Skills.
+Ein Docker-Image für einen SSH-fähigen Agent-Entwicklungscontainer mit vorinstallierter Toolchain (R, Python/lea, DuckDB, Helix, opencode, Pi) und Agent-Skills.
 
 ## Schnellstart
 
@@ -34,20 +34,19 @@ SSH erlaubt nur `agent`, ausschließlich per Public Key (keine Passwörter, kein
 | Kategorie   | Tool                                                        |
 |-------------|-------------------------------------------------------------|
 | Editor      | Helix (`hx`)                                                |
-| Agent       | opencode                                                    |
+| Agent       | opencode, Pi                                                |
 | Git/Hosting | `gh` (GitHub), `fj` (Forgejo-CLI)                           |
 | R           | R, pak, data.table, duckdb, shiny, plotly, …                |
 | Python      | 3.14, lea-cli, duckdb                                       |
 | Daten       | DuckDB CLI                                                  |
-| Utilities   | tmux, ripgrep, fd, fzf, tokei, air (R-Formatter), …         |
+| Utilities   | herdr, ripgrep, fd, fzf, tokei, air (R-Formatter), …         |
 | Skills      | mattpocock Engineering Skills (zur Build-Zeit), forgejo-Skill |
 
 ## Konfiguration
 
 - `agent.sh` — steuert Build/Run. Variablen: `IMAGE_NAME`, `CONTAINER_NAME`, `NETWORK_NAME`, `PORT_MAPPING` (Standard: `2222:22`).
 - `authorizedkeys` — derselbe Public Key für den Benutzer.
-- `hx_config.toml` / `tmux.conf` — Helix- bzw. tmux-Konfiguration.
-- `opencode/` — opencode-Konfiguration (`opencode.json`, `tui.json`, `commands/`, `skills/`).
+- `dotfiles/` — Konfigurationsdateien in einem das Container-Dateisystem spiegelnden Layout (z. B. `dotfiles/home/agent/.config/helix/config.toml`, `dotfiles/home/agent/.config/herdr/config.toml`, `dotfiles/home/agent/.config/opencode/`, `dotfiles/home/agent/.lintr`).
 
 ## Tokens
 
