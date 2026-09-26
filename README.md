@@ -39,14 +39,14 @@ SSH erlaubt nur `agent`, ausschließlich per Public Key (keine Passwörter, kein
 | R           | R, pak, data.table, duckdb, shiny, plotly, …                |
 | Python      | 3.14, lea-cli, duckdb                                       |
 | Daten       | DuckDB CLI                                                  |
-| Utilities   | tmux, ripgrep, fd, fzf, tokei, air (R-Formatter), …         |
+| Utilities   | herdr, ripgrep, fd, fzf, tokei, air (R-Formatter), …         |
 | Skills      | mattpocock Engineering Skills (zur Build-Zeit), forgejo-Skill |
 
 ## Konfiguration
 
 - `agent.sh` — steuert Build/Run. Variablen: `IMAGE_NAME`, `CONTAINER_NAME`, `NETWORK_NAME`, `PORT_MAPPING` (Standard: `2222:22`).
 - `authorizedkeys` — derselbe Public Key für den Benutzer.
-- `hx_config.toml` / `tmux.conf` — Helix- bzw. tmux-Konfiguration.
+- `hx_config.toml` / `herdr_config.toml` — Helix- bzw. herdr-Konfiguration.
 - `opencode/` — opencode-Konfiguration (`opencode.json`, `tui.json`, `commands/`, `skills/`).
 
 ## Tokens
