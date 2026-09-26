@@ -1,6 +1,6 @@
 # agent
 
-Ein Docker-Image für einen SSH-fähigen Agent-Entwicklungscontainer mit vorinstallierter Toolchain (R, Python/lea, DuckDB, Helix, opencode) und Agent-Skills.
+Ein Docker-Image für einen SSH-fähigen Agent-Entwicklungscontainer mit vorinstallierter Toolchain (R, Python/lea, DuckDB, Helix, opencode, Pi) und Agent-Skills.
 
 ## Schnellstart
 
@@ -34,7 +34,7 @@ SSH erlaubt nur `agent`, ausschließlich per Public Key (keine Passwörter, kein
 | Kategorie   | Tool                                                        |
 |-------------|-------------------------------------------------------------|
 | Editor      | Helix (`hx`)                                                |
-| Agent       | opencode                                                    |
+| Agent       | opencode, Pi                                                |
 | Git/Hosting | `gh` (GitHub), `fj` (Forgejo-CLI)                           |
 | R           | R, pak, data.table, duckdb, shiny, plotly, …                |
 | Python      | 3.14, lea-cli, duckdb                                       |
