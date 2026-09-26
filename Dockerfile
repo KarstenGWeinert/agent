@@ -156,6 +156,13 @@ RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*
     R -q -e 'pak::pkg_install(c("remotes", "data.table", "duckdb", "shiny", "bslib", "reactable", "plotly", "pdftools", \
 		"RhpcBLASctl", "nanoparquet", "httr", "jsonlite", "jose", "R.utils", "roxygen2", "devtools", "tinytest", "languageserver", "lpSolveAPI", "pals"))'
 
+## Node.js (for Pi)
+RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz" -o /tmp/node.tar.xz && \
+    tar -C /usr/local --strip-components=1 -xf /tmp/node.tar.xz && \
+    rm /tmp/node.tar.xz && \
+    node --version && \
+    npm --version
+
 USER agent
 WORKDIR /home/agent
 
@@ -170,6 +177,11 @@ RUN curl -fsSL https://opencode.ai/install | bash
 
 # herdr opencode integration
 RUN herdr integration install opencode
+
+## Pi (agent harness)
+ENV PATH="/home/agent/.local/bin:${PATH}"
+RUN npm install -g --prefix /home/agent/.local --ignore-scripts @earendil-works/pi-coding-agent && \
+    pi --version
 
 # lintr config
 COPY --chown=agent:agent lintr_config /home/agent/.lintr
