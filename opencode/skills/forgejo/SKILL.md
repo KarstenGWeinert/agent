@@ -14,6 +14,7 @@ Please select the document that matches your current task:
 * Secure Git cloning instructions (avoiding token leakage)
 * Git commit and push conventions
 * Using the local `fj` CLI for managing repositories, PRs, and issues
+* Issue labels: list with `fj repo labels <owner>/<repo> view`; add/remove with `fj issue edit <n> labels --add <label>` / `--rm <label>`. There is **no** `fj label` subcommand.
 
 ## 2. [CI/CD Pipeline](PIPELINE.md)
 **Target Audience:** CI authors maintaining or troubleshooting the Forgejo Actions workflow.
