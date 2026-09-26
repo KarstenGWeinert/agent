@@ -56,8 +56,8 @@ RUN HELIX_VERSION=$(curl -s "https://api.github.com/repos/helix-editor/helix/rel
     ln -sf /opt/helix-${HELIX_VERSION}-x86_64-linux/hx /usr/local/bin/hx && \
     rm /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
 	echo "export COLORTERM=truecolor" >> /home/agent/.bashrc
-COPY hx_config.toml /home/agent/.config/helix/config.toml
-COPY hx_languages.toml /home/agent/.config/helix/languages.toml
+COPY dotfiles/home/agent/.config/helix/config.toml /home/agent/.config/helix/config.toml
+COPY dotfiles/home/agent/.config/helix/languages.toml /home/agent/.config/helix/languages.toml
 
 ## sqls (SQL language server)
 RUN SQLS_VERSION=$(curl -s https://api.github.com/repos/sqls-server/sqls/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
@@ -121,13 +121,13 @@ RUN mkdir -p /home/agent/.ssh && \
 RUN curl -sL "https://github.com/herdrdev/herdr/releases/download/v0.9.1/herdr-linux-x86_64" -o /usr/local/bin/herdr && \
     chmod +x /usr/local/bin/herdr && \
     herdr --version
-COPY --chown=agent:agent herdr_config.toml /home/agent/.config/herdr/config.toml
+COPY --chown=agent:agent dotfiles/home/agent/.config/herdr/config.toml /home/agent/.config/herdr/config.toml
 RUN echo 'if [ -z "$HERDR_ENV" ] && [[ $- == *i* ]]; then exec herdr; fi' >> /home/agent/.bashrc && \
     chown -R agent:agent /home/agent/.bashrc
 
 # opencode
 RUN mkdir -p /home/agent/.config && chown agent:agent /home/agent/.config
-COPY --chown=agent:agent opencode/ /home/agent/.config/opencode/
+COPY --chown=agent:agent dotfiles/home/agent/.config/opencode/ /home/agent/.config/opencode/
 
 ## mattpocock engineering skills (installed at build time from upstream)
 RUN git clone --depth 1 https://github.com/mattpocock/skills /tmp/mattpocock-skills && \
@@ -184,7 +184,7 @@ RUN npm install -g --prefix /home/agent/.local --ignore-scripts @earendil-works/
     pi --version
 
 # lintr config
-COPY --chown=agent:agent lintr_config /home/agent/.lintr
+COPY --chown=agent:agent dotfiles/home/agent/.lintr /home/agent/.lintr
 
 USER root
 

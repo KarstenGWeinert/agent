@@ -46,8 +46,7 @@ SSH erlaubt nur `agent`, ausschließlich per Public Key (keine Passwörter, kein
 
 - `agent.sh` — steuert Build/Run. Variablen: `IMAGE_NAME`, `CONTAINER_NAME`, `NETWORK_NAME`, `PORT_MAPPING` (Standard: `2222:22`).
 - `authorizedkeys` — derselbe Public Key für den Benutzer.
-- `hx_config.toml` / `herdr_config.toml` — Helix- bzw. herdr-Konfiguration.
-- `opencode/` — opencode-Konfiguration (`opencode.json`, `tui.json`, `commands/`, `skills/`).
+- `dotfiles/` — Konfigurationsdateien in einem das Container-Dateisystem spiegelnden Layout (z. B. `dotfiles/home/agent/.config/helix/config.toml`, `dotfiles/home/agent/.config/herdr/config.toml`, `dotfiles/home/agent/.config/opencode/`, `dotfiles/home/agent/.lintr`).
 
 ## Tokens
 
