@@ -39,7 +39,7 @@ SSH erlaubt nur `agent`, ausschließlich per Public Key (keine Passwörter, kein
 | R           | R, pak, data.table, duckdb, shiny, plotly, …                |
 | Python      | 3.14, lea-cli, duckdb                                       |
 | Daten       | DuckDB CLI                                                  |
-| Utilities   | herdr, ripgrep, fd, fzf, tokei, air (R-Formatter), …         |
+| Utilities   | herdr, ripgrep, fd, fzf, scc, air (R-Formatter), …         |
 | Skills      | mattpocock Engineering Skills (zur Build-Zeit), forgejo-Skill |
 
 ## Konfiguration

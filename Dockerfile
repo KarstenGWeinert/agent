@@ -29,13 +29,18 @@ RUN curl -LsSf https://github.com/posit-dev/air/releases/latest/download/air-ins
     && rm -rf /root/.local \
     && air --version
 
-## Tokei (Code zählen)
-ENV RUSTUP_HOME=/opt/rust
-ENV CARGO_HOME=/opt/rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path && \
-    /opt/rust/bin/cargo install tokei --root /usr/local && \
-    /opt/rust/bin/cargo install sd --root /usr/local && \
-    rm -rf /opt/rust
+## scc (Code zählen) + sd (sed replacement)
+RUN curl -sL "https://github.com/boyter/scc/releases/download/v4.1.0/scc_Linux_x86_64.tar.gz" -o /tmp/scc.tar.gz && \
+    tar -xzf /tmp/scc.tar.gz -C /usr/local/bin scc && \
+    chmod +x /usr/local/bin/scc && \
+    rm /tmp/scc.tar.gz && \
+    curl -sL "https://github.com/chmln/sd/releases/download/v1.1.0/sd-v1.1.0-x86_64-unknown-linux-musl.tar.gz" -o /tmp/sd.tar.gz && \
+    tar -xzf /tmp/sd.tar.gz -C /tmp && \
+    cp /tmp/sd-v1.1.0-x86_64-unknown-linux-musl/sd /usr/local/bin/sd && \
+    chmod +x /usr/local/bin/sd && \
+    rm -rf /tmp/sd.tar.gz /tmp/sd-v1.1.0-x86_64-unknown-linux-musl && \
+    scc --version && \
+    sd --version
 
 ## Forgejo-CLI v0.6.0 
 RUN curl -sL "https://codeberg.org/forgejo-contrib/forgejo-cli/releases/download/v0.6.0/forgejo-cli-x86_64-linux.tar.gz" \
@@ -129,16 +134,6 @@ RUN echo 'if [ -z "$HERDR_ENV" ] && [[ $- == *i* ]]; then exec herdr; fi' >> /ho
 RUN mkdir -p /home/agent/.config && chown agent:agent /home/agent/.config
 COPY --chown=agent:agent dotfiles/home/agent/.config/opencode/ /home/agent/.config/opencode/
 
-## mattpocock engineering skills (installed at build time from upstream)
-RUN git clone --depth 1 https://github.com/mattpocock/skills /tmp/mattpocock-skills && \
-    mkdir -p /home/agent/.config/opencode/skills && \
-    for s in code-review codebase-design diagnosing-bugs domain-modeling grill-with-docs \
-             implement research resolving-merge-conflicts tdd to-spec to-tickets triage wayfinder; do \
-        cp -r /tmp/mattpocock-skills/skills/engineering/$s /home/agent/.config/opencode/skills/$s || exit 1; \
-    done && \
-    rm -rf /tmp/mattpocock-skills && \
-    chown -R agent:agent /home/agent/.config/opencode
-
 ## R Configuration (Using PPM Binaries)
 RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*/\1/') && \
     echo "Detected R version: $R_VERSION" && \
@@ -156,6 +151,9 @@ RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*
     R -q -e 'pak::pkg_install(c("remotes", "data.table", "duckdb", "shiny", "bslib", "reactable", "plotly", "pdftools", \
 		"RhpcBLASctl", "nanoparquet", "httr", "jsonlite", "jose", "R.utils", "roxygen2", "devtools", "tinytest", "languageserver", "lpSolveAPI", "pals"))'
 
+## highs (vendored HiGHS build via cmake; no PPM binary -> compile from source)
+RUN R -q -e 'install.packages("highs", type = "source", repos = "https://packagemanager.posit.co/cran/latest", Ncpus = 4)'
+
 ## Node.js (for Pi)
 RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz" -o /tmp/node.tar.xz && \
     tar -C /usr/local --strip-components=1 -xf /tmp/node.tar.xz && \
@@ -165,6 +163,14 @@ RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz"
 
 USER agent
 WORKDIR /home/agent
+
+## mattpocock engineering skills (installed at build time via the skills.sh CLI)
+RUN export DISABLE_TELEMETRY=1 && \
+    for s in code-review codebase-design diagnosing-bugs domain-modeling grill-with-docs \
+             implement research resolving-merge-conflicts tdd to-spec to-tickets triage wayfinder teach; do \
+        npx --yes skills add mattpocock/skills --skill "$s" --agent opencode --global --copy --yes || exit 1; \
+    done && \
+    npx --yes skills list
 
 # Configure Git 
 RUN git config --global credential.https://github.com.helper "!gh auth git-credential" && \
