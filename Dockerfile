@@ -129,16 +129,6 @@ RUN echo 'if [ -z "$HERDR_ENV" ] && [[ $- == *i* ]]; then exec herdr; fi' >> /ho
 RUN mkdir -p /home/agent/.config && chown agent:agent /home/agent/.config
 COPY --chown=agent:agent dotfiles/home/agent/.config/opencode/ /home/agent/.config/opencode/
 
-## mattpocock engineering skills (installed at build time from upstream)
-RUN git clone --depth 1 https://github.com/mattpocock/skills /tmp/mattpocock-skills && \
-    mkdir -p /home/agent/.config/opencode/skills && \
-    for s in code-review codebase-design diagnosing-bugs domain-modeling grill-with-docs \
-             implement research resolving-merge-conflicts tdd to-spec to-tickets triage wayfinder; do \
-        cp -r /tmp/mattpocock-skills/skills/engineering/$s /home/agent/.config/opencode/skills/$s || exit 1; \
-    done && \
-    rm -rf /tmp/mattpocock-skills && \
-    chown -R agent:agent /home/agent/.config/opencode
-
 ## R Configuration (Using PPM Binaries)
 RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*/\1/') && \
     echo "Detected R version: $R_VERSION" && \
@@ -165,6 +155,14 @@ RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz"
 
 USER agent
 WORKDIR /home/agent
+
+## mattpocock engineering skills (installed at build time via the skills.sh CLI)
+RUN export DISABLE_TELEMETRY=1 && \
+    for s in code-review codebase-design diagnosing-bugs domain-modeling grill-with-docs \
+             implement research resolving-merge-conflicts tdd to-spec to-tickets triage wayfinder teach; do \
+        npx --yes skills add mattpocock/skills --skill "$s" --agent opencode --global --copy --yes || exit 1; \
+    done && \
+    npx --yes skills list
 
 # Configure Git 
 RUN git config --global credential.https://github.com.helper "!gh auth git-credential" && \
