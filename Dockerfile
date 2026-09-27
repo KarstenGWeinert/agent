@@ -29,13 +29,18 @@ RUN curl -LsSf https://github.com/posit-dev/air/releases/latest/download/air-ins
     && rm -rf /root/.local \
     && air --version
 
-## Tokei (Code zählen)
-ENV RUSTUP_HOME=/opt/rust
-ENV CARGO_HOME=/opt/rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path && \
-    /opt/rust/bin/cargo install tokei --root /usr/local && \
-    /opt/rust/bin/cargo install sd --root /usr/local && \
-    rm -rf /opt/rust
+## scc (Code zählen) + sd (sed replacement)
+RUN curl -sL "https://github.com/boyter/scc/releases/download/v4.1.0/scc_Linux_x86_64.tar.gz" -o /tmp/scc.tar.gz && \
+    tar -xzf /tmp/scc.tar.gz -C /usr/local/bin scc && \
+    chmod +x /usr/local/bin/scc && \
+    rm /tmp/scc.tar.gz && \
+    curl -sL "https://github.com/chmln/sd/releases/download/v1.1.0/sd-v1.1.0-x86_64-unknown-linux-musl.tar.gz" -o /tmp/sd.tar.gz && \
+    tar -xzf /tmp/sd.tar.gz -C /tmp && \
+    cp /tmp/sd-v1.1.0-x86_64-unknown-linux-musl/sd /usr/local/bin/sd && \
+    chmod +x /usr/local/bin/sd && \
+    rm -rf /tmp/sd.tar.gz /tmp/sd-v1.1.0-x86_64-unknown-linux-musl && \
+    scc --version && \
+    sd --version
 
 ## Forgejo-CLI v0.6.0 
 RUN curl -sL "https://codeberg.org/forgejo-contrib/forgejo-cli/releases/download/v0.6.0/forgejo-cli-x86_64-linux.tar.gz" \
