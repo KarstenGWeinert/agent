@@ -151,6 +151,9 @@ RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*
     R -q -e 'pak::pkg_install(c("remotes", "data.table", "duckdb", "shiny", "bslib", "reactable", "plotly", "pdftools", \
 		"RhpcBLASctl", "nanoparquet", "httr", "jsonlite", "jose", "R.utils", "roxygen2", "devtools", "tinytest", "languageserver", "lpSolveAPI", "pals"))'
 
+## highs (vendored HiGHS build via cmake; no PPM binary -> compile from source)
+RUN R -q -e 'install.packages("highs", type = "source", repos = "https://packagemanager.posit.co/cran/latest", Ncpus = 4)'
+
 ## Node.js (for Pi)
 RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz" -o /tmp/node.tar.xz && \
     tar -C /usr/local --strip-components=1 -xf /tmp/node.tar.xz && \
