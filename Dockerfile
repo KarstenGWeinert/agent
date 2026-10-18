@@ -106,9 +106,6 @@ RUN mkdir -p /home/agent/.local/share /home/agent/.config && \
 
 # === Frequently changing customizations start here ===
 
-## Copy authorizedkeys
-COPY authorizedkeys /tmp/authorizedkeys
-
 ## Per-user GitHub tokens for SSH login shells
 RUN echo 'GITHUB_TOKEN_AGENT' >> /etc/environment && \
     echo 'GITHUB_TOKEN_NERT'   >> /etc/environment && \
@@ -116,11 +113,8 @@ RUN echo 'GITHUB_TOKEN_AGENT' >> /etc/environment && \
     echo 'DEEPSEEK_API_KEY' >> /etc/environment
 
 RUN mkdir -p /home/agent/.ssh && \
-    cp /tmp/authorizedkeys /home/agent/.ssh/authorized_keys && \
     chown -R agent:agent /home/agent/.ssh && \
-    chmod 700 /home/agent/.ssh && \
-    chmod 600 /home/agent/.ssh/authorized_keys && \
-    rm /tmp/authorizedkeys
+    chmod 700 /home/agent/.ssh
 	
 ## herdr (terminal workspace manager)
 RUN curl -sL "https://github.com/herdrdev/herdr/releases/download/v0.9.1/herdr-linux-x86_64" -o /usr/local/bin/herdr && \
@@ -209,6 +203,13 @@ RUN echo '#!/bin/bash' > /usr/local/bin/entrypoint.sh && \
 	echo 'EOF' >> /usr/local/bin/entrypoint.sh && \
 	echo 'chown agent:agent /home/agent/.ssh/environment /home/agent/.local/share/forgejo-cli/keys.json' >> /usr/local/bin/entrypoint.sh && \
 	echo 'chmod 600 /home/agent/.ssh/environment /home/agent/.local/share/forgejo-cli/keys.json' >> /usr/local/bin/entrypoint.sh && \
+	echo 'if [ -z "$SSH_PUBLIC_KEY" ]; then' >> /usr/local/bin/entrypoint.sh && \
+	echo '  echo "SSH_PUBLIC_KEY is not set or empty" >&2' >> /usr/local/bin/entrypoint.sh && \
+	echo '  exit 1' >> /usr/local/bin/entrypoint.sh && \
+	echo 'fi' >> /usr/local/bin/entrypoint.sh && \
+	echo 'printf "%s\\n" "$SSH_PUBLIC_KEY" > /home/agent/.ssh/authorized_keys' >> /usr/local/bin/entrypoint.sh && \
+	echo 'chown agent:agent /home/agent/.ssh/authorized_keys' >> /usr/local/bin/entrypoint.sh && \
+	echo 'chmod 600 /home/agent/.ssh/authorized_keys' >> /usr/local/bin/entrypoint.sh && \
 	echo 'exec /usr/sbin/sshd -D' >> /usr/local/bin/entrypoint.sh && \
 	chmod +x /usr/local/bin/entrypoint.sh
 
