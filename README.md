@@ -4,7 +4,7 @@ Ein Docker-Image für einen SSH-fähigen Agent-Entwicklungscontainer mit vorinst
 
 ## Schnellstart
 
-**Voraussetzungen:** Docker, eine Datei `authorizedkeys` mit deinem Public Key, und ein GitHub-Token.
+**Voraussetzungen:** Docker und ein GitHub-Token. Der Public Key wird über die Environment-Variable `SSH_PUBLIC_KEY` gesetzt.
 
 ```bash
 ./agent.sh build
@@ -12,6 +12,7 @@ export GITHUB_TOKEN_AGENT=ghp_xxx   # Token der Agent-Accounts
 export GITHUB_TOKEN_NERT=ghp_xxx
 export FORGEJO_TOKEN=xxx
 export DEEPSEEK_API_KEY=sk-xxx
+export SSH_PUBLIC_KEY="ssh-ed25519 AAAA... dein-key"
 ./agent.sh run
 ```
 
@@ -45,7 +46,7 @@ SSH erlaubt nur `agent`, ausschließlich per Public Key (keine Passwörter, kein
 ## Konfiguration
 
 - `agent.sh` — steuert Build/Run. Variablen: `IMAGE_NAME`, `CONTAINER_NAME`, `NETWORK_NAME`, `PORT_MAPPING` (Standard: `2222:22`).
-- `authorizedkeys` — derselbe Public Key für den Benutzer.
+- `SSH_PUBLIC_KEY` — Public Key des Benutzers als Environment-Variable; wird zur Laufzeit in `~/.ssh/authorized_keys` geschrieben.
 - `dotfiles/` — Konfigurationsdateien in einem das Container-Dateisystem spiegelnden Layout (z. B. `dotfiles/home/agent/.config/helix/config.toml`, `dotfiles/home/agent/.config/herdr/config.toml`, `dotfiles/home/agent/.config/opencode/`, `dotfiles/home/agent/.lintr`).
 
 ## Tokens
