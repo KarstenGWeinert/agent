@@ -25,12 +25,12 @@ git -c http.extraHeader="Authorization: Basic <base64-encoded-token>" clone http
 ### Merge rights (the agent does not merge)
 
 `kgw-agent` has **no merge access** on `main`: `fj pr merge` fails with `405 Method Not Allowed` /
-`User not allowed to merge PR`. Merges onto `main` are done by a human (user `nert`).
+`User not allowed to merge PR`. Merges onto `main` are done by a human.
 
 - Create the PR, but **do not merge it yourself**.
 - After creating a PR: wait for human review/merge before continuing (e.g. wait for the pipeline deploy to run,
   only then re-dispatch the workflow).
-- `fj pr status <nr>` shows who/when merged (e.g. `Merged by nert ...`).
+- `fj pr status <nr>` shows who/when merged (e.g. `Merged by <username> ...`).
 
 ## `fj` CLI (Forgejo CLI v0.6.0)
 
