@@ -64,7 +64,13 @@ Once CI is green, open a merge request from `nightshift` into `main`:
 - GitHub: `gh pr create --base main --head nightshift`.
 - Forgejo: `fj pr create` with the same base/head.
 
-The merge request body **must** reference every ticket resolved in this run with a closing keyword, e.g. `closes #<number>` on its own line per ticket, so the tracker links (and on GitHub auto-closes) each resolved ticket when a human merges.
+Shape the merge request body using the mattpocock `pr` skill's template:
+
+- **Summary** — the smallest visual that makes the change clear (call tree, file tree, diff, or mermaid). For a multi-ticket run this is a single aggregate summary of the whole branch's changes.
+- **Evidence** — before/after proof that it works: per-ticket evidence (each ticket's work branch already ran the repo's checks before being merged) plus the end-of-run CI result on `nightshift`.
+- **Merge Danger** — one-way vs two-way door, plus blast radius, stated once at the MR level.
+
+Then append a trailing **Resolved tickets** section that references every ticket resolved in this run with a closing keyword, e.g. `closes #<number>` on its own line per ticket, so the tracker links (and on GitHub auto-closes) each resolved ticket when a human merges.
 
 The agent does **not** merge into `main` — `main` is protected. The run ends here and reports the merge request URL for the human to review and merge.
 
