@@ -108,7 +108,6 @@ RUN mkdir -p /home/agent/.local/share /home/agent/.config && \
 
 ## Per-user GitHub tokens for SSH login shells
 RUN echo 'GITHUB_TOKEN_AGENT' >> /etc/environment && \
-    echo 'GITHUB_TOKEN_NERT'   >> /etc/environment && \
     echo 'FORGEJO_TOKEN' >> /etc/environment && \
     echo 'DEEPSEEK_API_KEY' >> /etc/environment
 
