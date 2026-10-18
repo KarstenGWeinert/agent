@@ -167,7 +167,7 @@ WORKDIR /home/agent
 ## mattpocock engineering skills (installed at build time via the skills.sh CLI)
 RUN export DISABLE_TELEMETRY=1 && \
     for s in code-review codebase-design diagnosing-bugs domain-modeling grill-with-docs \
-             implement research resolving-merge-conflicts tdd to-spec to-tickets triage wayfinder teach; do \
+             implement pr research resolving-merge-conflicts tdd to-spec to-tickets triage wayfinder teach; do \
         npx --yes skills add mattpocock/skills --skill "$s" --agent opencode --global --copy --yes || exit 1; \
     done && \
     npx --yes skills list
