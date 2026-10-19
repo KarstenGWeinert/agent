@@ -9,7 +9,6 @@ Ein Docker-Image für einen SSH-fähigen Agent-Entwicklungscontainer mit vorinst
 ```bash
 ./agent.sh build
 export GITHUB_TOKEN_AGENT=ghp_xxx   # Token der Agent-Accounts
-export GITHUB_TOKEN_NERT=ghp_xxx
 export FORGEJO_TOKEN=xxx
 export DEEPSEEK_API_KEY=sk-xxx
 export SSH_PUBLIC_KEY="ssh-ed25519 AAAA... dein-key"

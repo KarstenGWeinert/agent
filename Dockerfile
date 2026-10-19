@@ -4,16 +4,20 @@ FROM ubuntu:24.04
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         openssh-server git wget unzip curl less htop file xxd \
-        r-base r-base-dev libcurl4-openssl-dev \
+        libcurl4-openssl-dev \
         libcurl4 libxml2-dev libssl-dev build-essential xclip ripgrep fd-find fzf \
 	cmake libuv1-dev pandoc poppler-data libpoppler-cpp-dev \
 	libopenblas0 libopenblas-dev \
         sudo gh tzdata \
 	libfontconfig1-dev libfreetype6-dev libfribidi-dev libgit2-dev \
 	libharfbuzz-dev libtiff-dev libwebp-dev libx11-dev \
-	software-properties-common python3-pip \
-    && add-apt-repository -y ppa:deadsnakes/ppa  \
-    && apt-get update && apt-get install -y python3.14 python3.14-venv \
+	software-properties-common python3-pip ca-certificates gnupg \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:marutter/rrutter4.0 \
+    && gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/r2u.gpg --keyserver keyserver.ubuntu.com --recv-keys A1489FE2AB99A21A 67C2D66C4B1D4339 51716619E084DAB9 \
+    && printf 'Types: deb\nURIs: https://r2u.stat.illinois.edu/ubuntu\nSuites: noble\nComponents: main\nArchitectures: amd64 arm64\nSigned-By: /usr/share/keyrings/r2u.gpg\n' > /etc/apt/sources.list.d/r2u.sources \
+    && printf 'Package: *\nPin: release o=CRAN-Apt Project\nPin: release l=CRAN-Apt Packages\nPin-Priority: 700\n' > /etc/apt/preferences.d/99cranapt \
+    && apt-get update && apt-get install -y python3.14 python3.14-venv r-base r-base-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && ln -s $(which fdfind) /usr/local/bin/fd
 
@@ -108,7 +112,6 @@ RUN mkdir -p /home/agent/.local/share /home/agent/.config && \
 
 ## Per-user GitHub tokens for SSH login shells
 RUN echo 'GITHUB_TOKEN_AGENT' >> /etc/environment && \
-    echo 'GITHUB_TOKEN_NERT'   >> /etc/environment && \
     echo 'FORGEJO_TOKEN' >> /etc/environment && \
     echo 'DEEPSEEK_API_KEY' >> /etc/environment
 
@@ -128,12 +131,8 @@ RUN echo 'if [ -z "$HERDR_ENV" ] && [[ $- == *i* ]]; then exec herdr; fi' >> /ho
 RUN mkdir -p /home/agent/.config && chown agent:agent /home/agent/.config
 COPY --chown=agent:agent dotfiles/home/agent/.config/opencode/ /home/agent/.config/opencode/
 
-## R Configuration (Using PPM Binaries)
-RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*/\1/') && \
-    echo "Detected R version: $R_VERSION" && \
-    echo "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/latest'), pkg.type = 'binary')" >> /usr/lib/R/etc/Rprofile.site && \
-    echo "" >> /usr/lib/R/etc/Rprofile.site && \
-    echo "# Custom q() that does not ask to save workspace by default" >> /usr/lib/R/etc/Rprofile.site && \
+## R Configuration (r2u apt binaries, R 4.6)
+RUN echo "# Custom q() that does not ask to save workspace by default" > /usr/lib/R/etc/Rprofile.site && \
     echo "utils::assignInNamespace(" >> /usr/lib/R/etc/Rprofile.site && \
     echo "  'q'," >> /usr/lib/R/etc/Rprofile.site && \
     echo "  function(save = 'no', status = 0, runLast = TRUE) {" >> /usr/lib/R/etc/Rprofile.site && \
@@ -141,12 +140,12 @@ RUN R_VERSION=$(R --version | head -n 1 | sed -E 's/.*version ([0-9]+\.[0-9]+).*
     echo "  }," >> /usr/lib/R/etc/Rprofile.site && \
     echo "  'base'" >> /usr/lib/R/etc/Rprofile.site && \
     echo ")" >> /usr/lib/R/etc/Rprofile.site && \
-    R -q -e 'install.packages("pak", repos = "https://r-lib.github.io/p/pak/stable")' && \
-    R -q -e 'pak::pkg_install(c("remotes", "data.table", "duckdb", "shiny", "bslib", "reactable", "plotly", "pdftools", \
-		"RhpcBLASctl", "nanoparquet", "httr", "jsonlite", "jose", "R.utils", "roxygen2", "devtools", "tinytest", "languageserver", "lpSolveAPI", "pals"))'
-
-## highs (vendored HiGHS build via cmake; no PPM binary -> compile from source)
-RUN R -q -e 'install.packages("highs", type = "source", repos = "https://packagemanager.posit.co/cran/latest", Ncpus = 4)'
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        r-cran-data.table r-cran-duckdb r-cran-pdftools r-cran-rhpcblasctl r-cran-nanoparquet \
+        r-cran-jsonlite r-cran-roxygen2 r-cran-languageserver r-cran-lpsolveapi r-cran-highs && \
+    R -q -e 'install.packages(c("shiny","bslib","reactable","plotly","httr","jose","R.utils","devtools","tinytest","pals","remotes"), repos = "https://cloud.r-project.org")' && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ## Node.js (for Pi)
 RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz" -o /tmp/node.tar.xz && \

@@ -67,7 +67,6 @@ run() {
     --network "$NETWORK_NAME" \
     -p "$PORT_MAPPING" \
     --restart unless-stopped \
-    -e GITHUB_TOKEN_NERT \
     -e GITHUB_TOKEN_AGENT \
     -e FORGEJO_TOKEN \
     -e DEEPSEEK_API_KEY \
