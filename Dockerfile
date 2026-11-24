@@ -59,8 +59,8 @@ RUN useradd -m -s /bin/bash agent && \
     chmod 0440 /etc/sudoers.d/agent
 
 ## Helix Editor
-RUN HELIX_VERSION=$(curl -s "https://api.github.com/repos/helix-editor/helix/releases/latest" | grep -Po '"tag_name": "\K[^"]+') && \
-    curl -L "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix-${HELIX_VERSION}-x86_64-linux.tar.xz" -o /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
+RUN HELIX_VERSION=$(curl -fsI "https://github.com/helix-editor/helix/releases/latest" | sed -n 's#.*/releases/tag/##p' | tr -d '\r') && \
+    curl -fsSL "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix-${HELIX_VERSION}-x86_64-linux.tar.xz" -o /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
     tar -C /opt -xf /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
     ln -sf /opt/helix-${HELIX_VERSION}-x86_64-linux/hx /usr/local/bin/hx && \
     rm /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
@@ -69,8 +69,8 @@ COPY dotfiles/home/agent/.config/helix/config.toml /home/agent/.config/helix/con
 COPY dotfiles/home/agent/.config/helix/languages.toml /home/agent/.config/helix/languages.toml
 
 ## sqls (SQL language server)
-RUN SQLS_VERSION=$(curl -s https://api.github.com/repos/sqls-server/sqls/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
-    curl -sL "https://github.com/sqls-server/sqls/releases/download/v${SQLS_VERSION}/sqls-linux-${SQLS_VERSION}.zip" -o /tmp/sqls.zip && \
+RUN SQLS_VERSION=$(curl -fsI https://github.com/sqls-server/sqls/releases/latest | sed -n 's#.*/releases/tag/v##p' | tr -d '\r') && \
+    curl -fsSL "https://github.com/sqls-server/sqls/releases/download/v${SQLS_VERSION}/sqls-linux-${SQLS_VERSION}.zip" -o /tmp/sqls.zip && \
     unzip /tmp/sqls.zip -d /usr/local/bin/ && \
     chmod +x /usr/local/bin/sqls && \
     rm /tmp/sqls.zip
@@ -90,7 +90,7 @@ RUN mkdir -p /var/run/sshd && \
     sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
 
 ## DuckDB 
-RUN DUCKDB_VERSION=$(curl -s https://api.github.com/repos/duckdb/duckdb/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
+RUN DUCKDB_VERSION=$(curl -fsI https://github.com/duckdb/duckdb/releases/latest | sed -n 's#.*/releases/tag/v##p' | tr -d '\r') && \
     wget "https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VERSION}/duckdb-cli-linux-amd64.tar.gz" && \
     tar -xzf duckdb-cli-linux-amd64.tar.gz -C /usr/local/bin && \
     rm duckdb-cli-linux-amd64.tar.gz && \
