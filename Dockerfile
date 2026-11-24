@@ -145,7 +145,8 @@ RUN echo "# Custom q() that does not ask to save workspace by default" > /usr/li
         r-cran-data.table r-cran-duckdb r-cran-pdftools r-cran-rhpcblasctl r-cran-nanoparquet \
         r-cran-jsonlite r-cran-roxygen2 r-cran-languageserver r-cran-lpsolveapi r-cran-highs \
         r-cran-shiny r-cran-bslib r-cran-reactable r-cran-plotly r-cran-httr r-cran-jose \
-        r-cran-r.utils r-cran-devtools r-cran-tinytest r-cran-pals r-cran-remotes && \
+        r-cran-r.utils r-cran-devtools r-cran-tinytest r-cran-pals r-cran-remotes \
+        r-cran-simplermarkdown && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ## Node.js (for Pi)
