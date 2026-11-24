@@ -155,6 +155,10 @@ RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz"
     node --version && \
     npm --version
 
+## Pi (agent harness) — install into /usr/local/bin, on the default PATH for all shells
+RUN npm install -g --prefix /usr/local --ignore-scripts @earendil-works/pi-coding-agent && \
+    pi --version
+
 USER agent
 WORKDIR /home/agent
 
@@ -177,11 +181,6 @@ RUN curl -fsSL https://opencode.ai/install | bash
 
 # herdr opencode integration
 RUN herdr integration install opencode
-
-## Pi (agent harness)
-ENV PATH="/home/agent/.local/bin:${PATH}"
-RUN npm install -g --prefix /home/agent/.local --ignore-scripts @earendil-works/pi-coding-agent && \
-    pi --version
 
 # lintr config
 COPY --chown=agent:agent dotfiles/home/agent/.lintr /home/agent/.lintr
