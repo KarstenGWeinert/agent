@@ -20,6 +20,10 @@ _Avoid_: expense report, cost table
 A single unattended pass over the current repository's entire `ready-for-agent` backlog, from invocation to a merge request into `main`.
 _Avoid_: batch, night job, backlog processing
 
+**Peak guard**:
+A host-side guard that freezes the agent container during DeepSeek peak windows (weekdays 01:00–04:00 and 06:00–10:00 UTC) and unfreezes it afterwards, so unattended runs are billed at off-peak prices. It is enabled and inspected through `agent.sh`.
+_Avoid_: peak timer, pauser, freezer
+
 **Ready-for-agent ticket**:
 An issue that has been fully triaged and specified, carrying the `ready-for-agent` label and ready for an AFK agent to implement.
 _Avoid_: actionable issue, spec ticket
