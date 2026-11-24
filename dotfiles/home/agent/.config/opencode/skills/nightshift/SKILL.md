@@ -40,11 +40,15 @@ Order the backlog by `createdAt` ascending — oldest first, first-in-first-out.
 For each ticket, in order, exactly one at a time:
 
 1. **Create a ticket work branch** from the current head of `nightshift`. Name it after the ticket, e.g. `nightshift-<number>`. The slash form `nightshift/<number>` is impossible — git refuses to create `refs/heads/nightshift/<number>` beneath the existing `refs/heads/nightshift` branch.
-2. **Delegate the ticket to a subagent.** Give the subagent the ticket's full body, comments, and acceptance criteria. Its job: implement the change on the work branch. The ticket is considered **solved** only when **both** hold:
-   - every acceptance criterion in the ticket is met, and
-   - the repo's checks pass — run the repo's standard test/lint command (e.g. tinytest for R packages; `docker build` lint-style checks where the repo has no unit tests). If the ticket names a specific verification, use that.
-3. **Solved → integrate.** Merge the work branch into `nightshift`. Relabel the ticket from `ready-for-agent` to `ready-for-human` (it is now in the integration branch awaiting the human's review of the final merge request).
-4. **Failed → skip and report.** If the subagent cannot get the ticket solved (checks stay red, it is blocked, or it exceeds a reasonable effort), do not merge the work branch. Relabel the ticket from `ready-for-agent` to `needs-triage` — it goes back to the triage queue, and the run continues with the next ticket.
+2. **Delegate the implementation to a subagent.** Give the subagent the ticket's full body, comments, and acceptance criteria. Its job: implement the change on the work branch and run the repo's standard test/lint command (e.g. tinytest for R packages; `docker build` lint-style checks where the repo has no unit tests). If the ticket names a specific verification, use that. The implementing subagent never decides that the ticket is solved — that is the verifier's call (next step).
+3. **Verify independently.** Spawn a **separate** subagent with a fresh context whose only inputs are the ticket's full body, comments, acceptance criteria, and any `Key interfaces` / `Constraints` the brief names, plus the work branch diff (`git diff nightshift...HEAD`). Do **not** pass it the implementing subagent's transcript or reasoning. It must answer, per item, with evidence:
+   - every acceptance criterion: `PASS` or `FAIL`, quoting where in the diff or behaviour the evidence is;
+   - every interface or constraint the brief pins: whether the implementation diverges (`DIVERGENCE`);
+   - it independently re-runs the repo's checks and the ticket's named verification rather than trusting the implementer.
+
+   It ends with one line: `VERDICT: PASS` only if every acceptance criterion passes, no pinned interface/constraint is diverged from, and the checks are green; otherwise `VERDICT: FAIL` naming the blocking items. The divergence check only bites where the brief pins an interface or constraint — a brief that leaves the implementation open permits any behaviour-equivalent implementation.
+4. **Solved → integrate.** Merge the work branch into `nightshift` only when the verifier returns `VERDICT: PASS`. Relabel the ticket from `ready-for-agent` to `ready-for-human` (it is now in the integration branch awaiting the human's review of the final merge request).
+5. **Failed → skip and report.** If the implementing subagent cannot get the ticket green (blocked or beyond reasonable effort), or the verifier returns `VERDICT: FAIL`, do not merge the work branch. On a verifier failure, post the verifier's blocking findings as a ticket comment (starting with the AI disclaimer) so triage has the reason, then relabel the ticket from `ready-for-agent` to `needs-triage` — it goes back to the triage queue, and the run continues with the next ticket.
 
 The ticket keeps the `ready-for-agent` label while it is being worked — there is no in-progress marker.
 
@@ -67,7 +71,7 @@ Once CI is green, open a merge request from `nightshift` into `main`:
 Shape the merge request body using the mattpocock `pr` skill's template:
 
 - **Summary** — the smallest visual that makes the change clear (call tree, file tree, diff, or mermaid). For a multi-ticket run this is a single aggregate summary of the whole branch's changes.
-- **Evidence** — before/after proof that it works: per-ticket evidence (each ticket's work branch already ran the repo's checks before being merged) plus the end-of-run CI result on `nightshift`.
+- **Evidence** — before/after proof that it works: per-ticket evidence (each ticket's work branch passed an independent verifier against its acceptance criteria and ran the repo's checks before being merged) plus the end-of-run CI result on `nightshift`.
 - **Merge Danger** — one-way vs two-way door, plus blast radius, stated once at the MR level.
 
 Then append a trailing **Resolved tickets** section that references every ticket resolved in this run with a closing keyword, e.g. `closes #<number>` on its own line per ticket, so the tracker links (and on GitHub auto-closes) each resolved ticket when a human merges.
@@ -79,7 +83,7 @@ The agent does **not** merge into `main` — `main` is protected. The run ends h
 Report back to the caller:
 
 - Tickets processed (solved and merged into `nightshift`, with ticket numbers)
-- Tickets skipped (relabeled `needs-triage`, with ticket numbers and reason)
+- Tickets skipped (relabeled `needs-triage`, with ticket numbers and reason — include the verifier's blocking findings when verification failed)
 - CI outcome on `nightshift` and any fixes applied
 - The merge request URL into `main` and which tickets it closes
 
@@ -88,5 +92,6 @@ Report back to the caller:
 - Never push to or merge into `main`. The run ends with a merge request; a human merges.
 - Never work directly on `nightshift` — it only advances by merging solved ticket work branches.
 - Never force-push or rebase the `nightshift` branch.
+- Verification is independent: the implementing subagent never authorizes its own merge; only a verifier `VERDICT: PASS` plus green checks allows integration.
 - A single failing ticket never aborts the run — skip it and continue.
 - Every comment posted to the tracker during the run must start with the AI disclaimer `> *This was generated by AI during triage.*` (or the repo's established equivalent).
