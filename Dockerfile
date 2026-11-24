@@ -91,10 +91,11 @@ RUN mkdir -p /var/run/sshd && \
 
 ## DuckDB 
 RUN DUCKDB_VERSION=$(curl -s https://api.github.com/repos/duckdb/duckdb/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
-    wget "https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VERSION}/duckdb_cli-linux-amd64.zip" && \
-    unzip duckdb_cli-linux-amd64.zip -d /usr/local/bin/ && \
-    rm duckdb_cli-linux-amd64.zip && \
-    chmod +x /usr/local/bin/duckdb
+    wget "https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VERSION}/duckdb-cli-linux-amd64.tar.gz" && \
+    tar -xzf duckdb-cli-linux-amd64.tar.gz -C /usr/local/bin && \
+    rm duckdb-cli-linux-amd64.tar.gz && \
+    chmod +x /usr/local/bin/duckdb && \
+    duckdb --version
 
 ## Lea
 RUN python3.14 -c "import sys; v = sys.version_info; assert (v.major, v.minor) >= (3, 14), f'Python {v.major}.{v.minor} < 3.14'"
