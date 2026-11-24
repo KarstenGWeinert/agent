@@ -59,8 +59,8 @@ RUN useradd -m -s /bin/bash agent && \
     chmod 0440 /etc/sudoers.d/agent
 
 ## Helix Editor
-RUN HELIX_VERSION=$(curl -s "https://api.github.com/repos/helix-editor/helix/releases/latest" | grep -Po '"tag_name": "\K[^"]+') && \
-    curl -L "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix-${HELIX_VERSION}-x86_64-linux.tar.xz" -o /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
+RUN HELIX_VERSION=$(curl -fsI "https://github.com/helix-editor/helix/releases/latest" | sed -n 's#.*/releases/tag/##p' | tr -d '\r') && \
+    curl -fsSL "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix-${HELIX_VERSION}-x86_64-linux.tar.xz" -o /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
     tar -C /opt -xf /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
     ln -sf /opt/helix-${HELIX_VERSION}-x86_64-linux/hx /usr/local/bin/hx && \
     rm /tmp/helix-${HELIX_VERSION}-x86_64-linux.tar.xz && \
@@ -69,8 +69,8 @@ COPY dotfiles/home/agent/.config/helix/config.toml /home/agent/.config/helix/con
 COPY dotfiles/home/agent/.config/helix/languages.toml /home/agent/.config/helix/languages.toml
 
 ## sqls (SQL language server)
-RUN SQLS_VERSION=$(curl -s https://api.github.com/repos/sqls-server/sqls/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
-    curl -sL "https://github.com/sqls-server/sqls/releases/download/v${SQLS_VERSION}/sqls-linux-${SQLS_VERSION}.zip" -o /tmp/sqls.zip && \
+RUN SQLS_VERSION=$(curl -fsI https://github.com/sqls-server/sqls/releases/latest | sed -n 's#.*/releases/tag/v##p' | tr -d '\r') && \
+    curl -fsSL "https://github.com/sqls-server/sqls/releases/download/v${SQLS_VERSION}/sqls-linux-${SQLS_VERSION}.zip" -o /tmp/sqls.zip && \
     unzip /tmp/sqls.zip -d /usr/local/bin/ && \
     chmod +x /usr/local/bin/sqls && \
     rm /tmp/sqls.zip
@@ -90,11 +90,12 @@ RUN mkdir -p /var/run/sshd && \
     sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
 
 ## DuckDB 
-RUN DUCKDB_VERSION=$(curl -s https://api.github.com/repos/duckdb/duckdb/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
-    wget "https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VERSION}/duckdb_cli-linux-amd64.zip" && \
-    unzip duckdb_cli-linux-amd64.zip -d /usr/local/bin/ && \
-    rm duckdb_cli-linux-amd64.zip && \
-    chmod +x /usr/local/bin/duckdb
+RUN DUCKDB_VERSION=$(curl -fsI https://github.com/duckdb/duckdb/releases/latest | sed -n 's#.*/releases/tag/v##p' | tr -d '\r') && \
+    wget "https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VERSION}/duckdb-cli-linux-amd64.tar.gz" && \
+    tar -xzf duckdb-cli-linux-amd64.tar.gz -C /usr/local/bin && \
+    rm duckdb-cli-linux-amd64.tar.gz && \
+    chmod +x /usr/local/bin/duckdb && \
+    duckdb --version
 
 ## Lea
 RUN python3.14 -c "import sys; v = sys.version_info; assert (v.major, v.minor) >= (3, 14), f'Python {v.major}.{v.minor} < 3.14'"
@@ -145,7 +146,8 @@ RUN echo "# Custom q() that does not ask to save workspace by default" > /usr/li
         r-cran-data.table r-cran-duckdb r-cran-pdftools r-cran-rhpcblasctl r-cran-nanoparquet \
         r-cran-jsonlite r-cran-roxygen2 r-cran-languageserver r-cran-lpsolveapi r-cran-highs \
         r-cran-shiny r-cran-bslib r-cran-reactable r-cran-plotly r-cran-httr r-cran-jose \
-        r-cran-r.utils r-cran-devtools r-cran-tinytest r-cran-pals r-cran-remotes && \
+        r-cran-r.utils r-cran-devtools r-cran-tinytest r-cran-pals r-cran-remotes \
+        r-cran-simplermarkdown && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ## Node.js (for Pi)
@@ -155,12 +157,16 @@ RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz"
     node --version && \
     npm --version
 
+## Pi (agent harness) — install into /usr/local/bin, on the default PATH for all shells
+RUN npm install -g --prefix /usr/local --ignore-scripts @earendil-works/pi-coding-agent && \
+    pi --version
+
 USER agent
 WORKDIR /home/agent
 
 ## mattpocock engineering skills (installed at build time via the skills.sh CLI)
 RUN export DISABLE_TELEMETRY=1 && \
-    for s in code-review codebase-design diagnosing-bugs domain-modeling grill-with-docs \
+    for s in code-review codebase-design diagnosing-bugs domain-modeling grilling grill-with-docs \
              implement pr research tdd to-spec to-tickets triage wayfinder teach; do \
         npx --yes skills add mattpocock/skills --skill "$s" --agent opencode --global --copy --yes || exit 1; \
     done && \
@@ -177,11 +183,6 @@ RUN curl -fsSL https://opencode.ai/install | bash
 
 # herdr opencode integration
 RUN herdr integration install opencode
-
-## Pi (agent harness)
-ENV PATH="/home/agent/.local/bin:${PATH}"
-RUN npm install -g --prefix /home/agent/.local --ignore-scripts @earendil-works/pi-coding-agent && \
-    pi --version
 
 # lintr config
 COPY --chown=agent:agent dotfiles/home/agent/.lintr /home/agent/.lintr
