@@ -1,0 +1,16 @@
+[Unit]
+Description=DeepSeek peak guard boundaries (Mon-Fri 01:00-04:00 and 06:00-10:00 UTC)
+
+[Timer]
+# DeepSeek peak windows. Off-peak is the other 20 hours, all weekend, and
+# Chinese public holidays (which this timer deliberately does not model).
+OnCalendar=Mon..Fri *-*-* 01:00:00 UTC
+OnCalendar=Mon..Fri *-*-* 04:00:00 UTC
+OnCalendar=Mon..Fri *-*-* 06:00:00 UTC
+OnCalendar=Mon..Fri *-*-* 10:00:00 UTC
+# Catch up on boundaries missed while the host was off or suspended.
+Persistent=true
+Unit=agent-peak-guard.service
+
+[Install]
+WantedBy=timers.target

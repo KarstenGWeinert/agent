@@ -1,0 +1,13 @@
+[Unit]
+Description=Reconcile the DeepSeek peak guard for the agent container
+# Never run the reconcile before Docker (and its restart policy) is up.
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+# One-time edit: point this at the checkout that contains agent.sh.
+WorkingDirectory=/path/to/agent-checkout
+# Edit only if the container is not the agent.sh default (opencode-container).
+Environment=CONTAINER_NAME=opencode-container
+ExecStart=/bin/bash -c './agent.sh peak-guard apply'
