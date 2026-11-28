@@ -1,0 +1,10 @@
+id = "kgw.glocke"
+name = "Glocke"
+version = "0.1.0"
+min_herdr_version = "0.9.1"
+description = "Ring the terminal bell in connected clients when an agent becomes blocked or done"
+platforms = ["linux"]
+
+[[events]]
+on = "pane.agent_status_changed"
+command = ["bash", "bel.sh"]

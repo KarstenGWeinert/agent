@@ -172,8 +172,19 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     direnv version
 
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends jq && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    jq --version
+
+## herdr glocke plugin (rings the terminal bell on blocked/done)
+COPY --chown=agent:agent herdr-plugins/glocke /opt/herdr-plugins/glocke
+
 USER agent
 WORKDIR /home/agent
+
+RUN herdr plugin link /opt/herdr-plugins/glocke && \
+    herdr plugin list | grep -q 'kgw.glocke'
 
 ## herdr worktree-setup plugin (runs per-worktree setup steps on worktree.created)
 COPY --chown=agent:agent dotfiles/home/agent/.config/herdr/plugins/config/tdi.worktree-setup/config.toml /tmp/herdr-worktree-setup-config.toml
