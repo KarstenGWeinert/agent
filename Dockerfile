@@ -166,8 +166,21 @@ RUN curl -fsSL "https://nodejs.org/dist/v22.23.3/node-v22.23.3-linux-x64.tar.xz"
 RUN npm install -g --prefix /usr/local --ignore-scripts @earendil-works/pi-coding-agent && \
     pi --version
 
+## direnv (used by the herdr worktree-setup plugin)
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends direnv && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    direnv version
+
 USER agent
 WORKDIR /home/agent
+
+## herdr worktree-setup plugin (runs per-worktree setup steps on worktree.created)
+COPY --chown=agent:agent dotfiles/home/agent/.config/herdr/plugins/config/tdi.worktree-setup/config.toml /tmp/herdr-worktree-setup-config.toml
+RUN herdr plugin install tdi/herdr-worktree-setup --yes && \
+    herdr plugin list | grep -q 'tdi.worktree-setup' && \
+    install -m 0644 /tmp/herdr-worktree-setup-config.toml "$(herdr plugin config-dir tdi.worktree-setup)/config.toml" && \
+    rm /tmp/herdr-worktree-setup-config.toml
 
 ## mattpocock engineering skills (installed at build time via the skills.sh CLI)
 RUN export DISABLE_TELEMETRY=1 && \

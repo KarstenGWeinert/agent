@@ -1,0 +1,9 @@
+# Default catch-all for the herdr worktree-setup plugin (tdi.worktree-setup).
+# Steps run via `sh -c` with cwd = the new worktree, in order, fail-fast.
+# Copy an existing .envrc from the main repo, then let direnv approve it only
+# when one is present so repos without .envrc are left untouched.
+[default]
+steps = [
+  'cp "$HERDR_MAIN_REPO"/.envrc . 2>/dev/null || true',
+  'if [ -f .envrc ]; then direnv allow; fi',
+]
