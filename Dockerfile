@@ -131,6 +131,11 @@ RUN echo 'if [ -z "$HERDR_ENV" ] && [[ $- == *i* ]]; then exec herdr; fi' >> /ho
 # opencode
 RUN mkdir -p /home/agent/.config && chown agent:agent /home/agent/.config
 COPY --chown=agent:agent dotfiles/home/agent/.config/opencode/ /home/agent/.config/opencode/
+RUN herdr --skill > /tmp/herdr-skill.md && \
+    test -s /tmp/herdr-skill.md && \
+    install -d -m 0755 -o agent -g agent /home/agent/.config/opencode/skills/herdr && \
+    install -m 0644 -o agent -g agent /tmp/herdr-skill.md /home/agent/.config/opencode/skills/herdr/SKILL.md && \
+    rm /tmp/herdr-skill.md
 
 ## R Configuration (r2u apt binaries, R 4.6)
 RUN echo "# Custom q() that does not ask to save workspace by default" > /usr/lib/R/etc/Rprofile.site && \
